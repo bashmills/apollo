@@ -1,0 +1,12 @@
+node_modules
+dist-electron
+dist
+
+.vscode
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
