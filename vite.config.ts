@@ -4,7 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     electron({
@@ -14,6 +13,13 @@ export default defineConfig({
       },
       main: {
         entry: "electron/main.ts",
+        vite: {
+          build: {
+            rollupOptions: {
+              external: ["sharp"],
+            },
+          },
+        },
       },
     }),
     tailwindcss(),

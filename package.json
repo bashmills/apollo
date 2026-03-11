@@ -1,19 +1,35 @@
 {
   "name": "apollo",
+  "description": "Download music playlists with metadata",
+  "author": "Bash Mills",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version",
+    "build:patch": "npm run version:patch && npm run build",
+    "build:minor": "npm run version:minor && npm run build",
+    "build:major": "npm run version:major && npm run build",
     "build": "tsc && vite build && electron-builder",
     "preview": "vite preview",
     "dev": "vite"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
+    "electron-log": "^5.4.3",
+    "fuse.js": "^7.1.0",
+    "node-id3": "^0.2.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwindcss": "^4.2.1"
+    "react-tooltip": "^6.0.0",
+    "sanitize-filename": "^1.6.4",
+    "sharp": "^0.34.5",
+    "sonner": "^2.0.7",
+    "tailwindcss": "^4.2.1",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
