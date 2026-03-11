@@ -1,33 +1,28 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.bashmills.apollo",
+  "icon": "resources/apollo.png",
   "asar": true,
+  "asarUnpack": ["node_modules/sharp/**/*", "node_modules/@img/**/*"],
   "productName": "Apollo",
   "directories": {
-    "output": "release/${version}"
+    "output": "builds/${version}"
   },
-  "files": ["dist", "dist-electron"],
+  "files": ["dist-electron/**/*", "dist/**/*"],
+  "linux": {
+    "extraResources": [{ "from": "resources/linux/bin", "to": "bin" }],
+    "artifactName": "${productName}-Linux-${version}.${ext}",
+    "target": ["AppImage"],
+    "category": "Audio"
+  },
   "mac": {
-    "target": ["dmg"],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "extraResources": [{ "from": "resources/darwin/bin", "to": "bin" }],
+    "artifactName": "${productName}-Mac-${version}.${ext}",
+    "target": ["dmg"]
   },
   "win": {
-    "target": [
-      {
-        "target": "nsis",
-        "arch": ["x64"]
-      }
-    ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
-  },
-  "nsis": {
-    "oneClick": false,
-    "perMachine": false,
-    "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
-  },
-  "linux": {
-    "target": ["AppImage"],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+    "extraResources": [{ "from": "resources/win/bin", "to": "bin" }],
+    "artifactName": "${productName}-Win-${version}.${ext}",
+    "target": ["msi"]
   }
 }
