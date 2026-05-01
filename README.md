@@ -2,18 +2,18 @@
 
 Apollo is a desktop application for downloading music playlists. It uses `yt-dlp` under the hood to fetch audio from online sources. It uses the embedded metadata to fetch matching releases from `MusicBrainz` and attempts to choose a best matching release. It then uses `Cover Art Archive` to download album artwork for each release.
 
-The app itself uses Electron, React, Tailwind and Vite.
+The app itself uses `Electron`, `React`, `Tailwind` and `Vite`.
 
 ## Features
 
-- Electron based cross platform desktop app (Windows, MacOS, Linux)
-- Download entire music playlists at the click of a button
-- Uses `yt-dlp` for downloading and audio extraction
-- Override embdedded metadata for more accurate release matching
-- `MusicBrainz` release downloading and tagging
-- Select alternate releases from potential `MusicBrainz` matches
-- Retrieve album artwork via `Cover Art Archive`
-- Add custom releases for more obscur songs
+- Electron based cross platform desktop app (Windows, MacOS, Linux).
+- Download entire music playlists at the click of a button.
+- Uses `yt-dlp` for downloading and audio extraction.
+- Override embdedded metadata for more accurate release matching.
+- `MusicBrainz` release downloading and tagging.
+- Select alternate releases from potential `MusicBrainz` matches.
+- Retrieve album artwork via `Cover Art Archive`.
+- Add custom releases for more obscur songs.
 
 ## Installation
 
@@ -41,7 +41,7 @@ Prebuilt installers are available for each platform [here](https://github.com/ba
 
 Apollo uses the GitHub API to download and fetch `yt-dlp` releases. GitHub enforces rate limits on unauthenticated requests. If you experience issues installing or updating `yt-dlp`:
 
-- Use a GitHub Personal Access Token for authenticated requests ([here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token))
+- Use a GitHub Personal Access Token for authenticated requests ([here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)).
 - Ensure your network is not heavily rate-limited or behind a shared network.
 - Avoid repeatedly triggering `Fetch Latest` in rapid succession.
 - Switch networks if possible.
