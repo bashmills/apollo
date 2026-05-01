@@ -1,0 +1,50 @@
+name: Publish Project
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - "^[0-9]+[.][0-9]+[.][0-9]+$"
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    name: Building ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build project
+        run: npm run build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}
+          path: |
+            builds/**/Apollo-Linux-*.AppImage
+            builds/**/Apollo-Mac-*.dmg
+            builds/**/Apollo-Win-*.msi
+          if-no-files-found: error
+          retention-days: 1
+  release:
+    needs: build
+    name: Publishing Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: artifacts
+      - name: Create release
+        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag artifacts/*
+        env:
+          GH_TOKEN: ${{ github.token }}
