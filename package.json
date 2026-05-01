@@ -16,7 +16,7 @@
     "build:patch": "npm run version:patch && npm run build",
     "build:minor": "npm run version:minor && npm run build",
     "build:major": "npm run version:major && npm run build",
-    "build": "tsc && vite build && electron-builder",
+    "build": "tsc && vite build && electron-builder --publish never",
     "preview": "vite preview",
     "dev": "vite"
   },

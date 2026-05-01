@@ -3,7 +3,7 @@ on:
   workflow_dispatch: {}
   push:
     tags:
-      - "^[0-9]+[.][0-9]+[.][0-9]+$"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 jobs:
   build:
     strategy:
@@ -14,9 +14,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
           cache: npm
@@ -25,7 +25,7 @@ jobs:
       - name: Build project
         run: npm run build
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}
           path: |
@@ -39,12 +39,14 @@ jobs:
     name: Publishing Release
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           merge-multiple: true
           path: artifacts
       - name: Create release
-        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag artifacts/*
+        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag artifacts/**/*
         env:
           GH_TOKEN: ${{ github.token }}
