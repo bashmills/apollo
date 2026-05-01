@@ -3,8 +3,11 @@
   "description": "Download music playlists with metadata",
   "author": "Bash Mills",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "24.14.0"
+  },
   "scripts": {
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "version:patch": "npm version patch --no-git-tag-version",
