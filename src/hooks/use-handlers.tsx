@@ -223,6 +223,7 @@ export function useHandlers() {
       const success = await invokeWithSleep(() => window.backend?.savePersonalAccessToken(token), DELAY);
       if (!success) {
         log.info("Handle save personal access token failed");
+        return;
       }
 
       toast.success("Personal access token saved");
@@ -241,6 +242,7 @@ export function useHandlers() {
       const success = await invokeWithSleep(() => window.backend?.fetchLatest(), DELAY);
       if (!success) {
         log.info("Handle fetch latest failed");
+        return;
       }
 
       toast.success("Latest fetched");
@@ -259,6 +261,7 @@ export function useHandlers() {
       const success = await invokeWithSleep(() => window.backend?.clearCache(), DELAY);
       if (!success) {
         log.info("Handle clear cache failed");
+        return;
       }
 
       toast.success("Cache cleared");
