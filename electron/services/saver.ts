@@ -19,29 +19,25 @@ interface Info {
 const FOLDER_NAME = "intermediate";
 
 export async function exportDownloads({ onUpdateItem, folder, items }: Options) {
-  try {
-    await cleanupFolders();
-    const info = await buildInfo();
-    for (const item of items) {
-      if (item.itemStatus !== "saving") {
-        continue;
-      }
-
-      const filepath = await copyToIntermediateFolder(info, item);
-      await exportItemMetadata(filepath, item);
-      await saveItem(filepath, folder, item);
-
-      item.itemStatus = "saved";
-      onUpdateItem(item);
+  const info = await buildInfo();
+  await using intermediatePath = await fs.mkdtempDisposable(path.join(info.intermediatePath, path.sep));
+  for (const item of items) {
+    if (item.itemStatus !== "saving") {
+      continue;
     }
-  } finally {
-    await cleanupFolders();
+
+    const filepath = await copyToIntermediateFolder(intermediatePath.path, item);
+    await exportItemMetadata(filepath, item);
+    await saveItem(filepath, folder, item);
+
+    item.itemStatus = "saved";
+    onUpdateItem(item);
   }
 }
 
-async function copyToIntermediateFolder(info: Info, item: Item): Promise<string> {
+async function copyToIntermediateFolder(intermediatePath: string, item: Item): Promise<string> {
   const filename = path.basename(item.downloadPath);
-  const filepath = path.join(info.intermediatePath, filename);
+  const filepath = path.join(intermediatePath, filename);
   log.info(`${item.id} - Copying item: ${filepath}`);
   await fs.copyFile(item.downloadPath, filepath);
   return filepath;
@@ -75,10 +71,6 @@ async function saveItem(sourcePath: string, folder: string, item: Item) {
   log.info(`${item.id} - Saving item: ${destPath}`);
   await fs.copyFile(sourcePath, destPath);
   await fs.rm(sourcePath);
-}
-
-async function cleanupFolders() {
-  await fs.rm(getFolderPath(), { recursive: true, force: true });
 }
 
 async function buildInfo(): Promise<Info> {
