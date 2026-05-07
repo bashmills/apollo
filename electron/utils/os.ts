@@ -32,7 +32,7 @@ export function getCacheDirectory(): string {
     case "darwin":
       return path.join(home, "Library", "Caches", FOLDER_NAME);
     case "win32":
-      return path.join(home, "AppData", "Local", FOLDER_NAME);
+      return path.join(home, "AppData", "Local", FOLDER_NAME, "Cache");
     case "linux":
       return path.join(home, ".cache", FOLDER_NAME);
   }
@@ -47,7 +47,7 @@ export function getDataDirectory(): string {
     case "darwin":
       return path.join(home, "Library", "Application Support", FOLDER_NAME);
     case "win32":
-      return path.join(home, "AppData", "Local", FOLDER_NAME);
+      return path.join(home, "AppData", "Local", FOLDER_NAME, "Data");
     case "linux":
       return path.join(home, ".local", "share", FOLDER_NAME);
   }
