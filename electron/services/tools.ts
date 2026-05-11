@@ -7,7 +7,8 @@ import log from "electron-log/main";
 import fs from "fs/promises";
 import path from "path";
 
-type ToolType = "yt-dlp" | "ffmpeg" | "deno";
+type ToolName = "yt-dlp" | "ffmpeg" | "deno";
+type ToolType = "download" | "bundled";
 
 export interface ToolPaths {
   ytdlp: string;
@@ -18,6 +19,7 @@ export interface ToolPaths {
 interface Tool {
   assetNames?: Map<NodeJS.Platform, string>;
   toolNames: Map<NodeJS.Platform, string>;
+  toolType: ToolType;
 }
 
 interface Info {
@@ -36,7 +38,7 @@ interface Asset {
   name: string;
 }
 
-const TOOLS = new Map<ToolType, Tool>([
+const TOOLS = new Map<ToolName, Tool>([
   [
     "yt-dlp",
     {
@@ -50,6 +52,7 @@ const TOOLS = new Map<ToolType, Tool>([
         ["darwin", "yt-dlp"],
         ["linux", "yt-dlp"],
       ]),
+      toolType: "download",
     },
   ],
   [
@@ -60,6 +63,7 @@ const TOOLS = new Map<ToolType, Tool>([
         ["darwin", "ffmpeg"],
         ["linux", "ffmpeg"],
       ]),
+      toolType: "bundled",
     },
   ],
   [
@@ -70,6 +74,7 @@ const TOOLS = new Map<ToolType, Tool>([
         ["darwin", "deno"],
         ["linux", "deno"],
       ]),
+      toolType: "bundled",
     },
   ],
 ]);
@@ -151,9 +156,9 @@ export async function getToken(): Promise<string> {
 }
 
 export function getToolPaths(): ToolPaths {
-  const getPath = (toolType: ToolType): string => {
-    const toolPath = getToolPath(toolType);
-    log.info(`Tool: ${toolType} = ${toolPath}`);
+  const getPath = (toolName: ToolName): string => {
+    const toolPath = getToolPath(toolName);
+    log.info(`Tool: ${toolName} = ${toolPath}`);
     return toolPath;
   };
 
@@ -326,9 +331,9 @@ async function buildInfo(): Promise<Info> {
   return { assetName, toolPath };
 }
 
-function getAssetName(toolType: ToolType): string {
+function getAssetName(toolName: ToolName): string {
   const platform = process.platform;
-  const name = TOOLS.get(toolType)?.assetNames?.get(platform);
+  const name = TOOLS.get(toolName)?.assetNames?.get(platform);
   if (!name) {
     throw new Error("Unsupported platform");
   }
@@ -336,24 +341,29 @@ function getAssetName(toolType: ToolType): string {
   return name;
 }
 
-function getToolPath(toolType: ToolType): string {
-  return path.join(getToolDirectory(toolType), getToolName(toolType));
+function getToolName(toolName: ToolName): string {
+  const platform = process.platform;
+  const name = TOOLS.get(toolName)?.toolNames?.get(platform);
+  if (!name) {
+    throw new Error("Unsupported platform");
+  }
+
+  return name;
 }
 
-function getToolDirectory(toolType: ToolType): string {
-  if (!TOOLS.get(toolType)?.assetNames) {
+function getToolPath(toolName: ToolName): string {
+  return path.join(getToolDirectory(toolName), getToolName(toolName));
+}
+
+function getToolDirectory(toolName: ToolName): string {
+  const type = TOOLS.get(toolName)?.toolType;
+  if (!type) {
+    throw new Error("Unsupported platform");
+  }
+
+  if (type === "bundled") {
     return path.join(getResourcesDirectory(), "bin");
   }
 
   return getDataDirectory();
-}
-
-function getToolName(toolType: ToolType): string {
-  const platform = process.platform;
-  const name = TOOLS.get(toolType)?.toolNames?.get(platform);
-  if (!name) {
-    throw new Error("Unsupported platform");
-  }
-
-  return name;
 }
