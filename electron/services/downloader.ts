@@ -11,6 +11,8 @@ import log from "electron-log/main";
 import fs from "fs/promises";
 import path from "path";
 
+type DownloadType = "playlist" | "single" | "none";
+
 export interface StartOptions {
   onUpdateItems: (newItems: Item[]) => void;
   onUpdateItem: (newItem: Item) => void;
@@ -31,8 +33,14 @@ interface DownloadOptions {
   onShowError: (error: unknown) => void;
 }
 
+interface Params {
+  downloadType: DownloadType;
+  playlist: string;
+}
+
 interface Info {
-  downloadsPath: string;
+  downloadType: DownloadType;
+  downloadPath: string;
   playlist: string;
 }
 
@@ -41,10 +49,13 @@ const FOLDER_NAME = "downloads";
 export async function startDownloads(options: StartOptions, signal: AbortSignal) {
   const { onUpdateItems, onUpdateItem, onShowError, url } = options;
   const info = await buildInfo(options);
+  const { downloadType, playlist } = info;
   const paths = getToolPaths();
-  const { playlist } = info;
+  if (downloadType === "playlist") {
+    await downloadPlaylistThumbnail({ playlist, url }, paths, signal);
+  }
+
   const items = await prefetchDownloads(options, info, paths, signal);
-  await downloadPlaylistThumbnail({ playlist, url }, paths, signal);
   await performDownloads(
     {
       onUpdateItems: (newItems: Item[]) => !signal.aborted && onUpdateItems(newItems),
@@ -72,12 +83,13 @@ export async function retryDownloads(options: RetryOptions, signal: AbortSignal)
   );
 }
 
-async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloadsPath }: Info, { ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal): Promise<Item[]> {
+async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloadType, downloadPath }: Info, { ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal): Promise<Item[]> {
   return new Promise((resolve, reject) => {
     log.info(`Prefetching downloads: ${url}`);
     const args = ["--ignore-config", "--abort-on-unavailable-fragments", "--abort-on-error", "--ffmpeg-location", ffmpeg, "--js-runtimes", `deno:${deno}`, "--skip-download", "--flat-playlist", "--dump-json", "--no-progress", url];
     const subprocess = spawn(ytdlp, args, { signal });
     const lines: string[] = [];
+    let buffer = "";
 
     subprocess.on("close", (code: number) => {
       if (code !== 0) {
@@ -85,23 +97,47 @@ async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloa
         return;
       }
 
+      const messages = buffer.trim().split("\n");
+      for (const message of messages) {
+        lines.push(message);
+        log.silly(message);
+      }
+
       const items: Item[] = [];
       for (const line of lines) {
         try {
           const json = JSON.parse(line);
-          const filename = sanitize(`${json["playlist_index"]} - ${json["title"]}.mp3`);
-          const thumbnail = `${filename}.jpg`;
-          items.push({
-            itemStatus: "waiting",
-            thumbnailPath: path.join(downloadsPath, thumbnail),
-            downloadPath: path.join(downloadsPath, filename),
-            imageType: "cover-art",
-            playlist: json["playlist_id"],
-            index: json["playlist_index"],
-            title: json["title"],
-            url: json["url"],
-            id: json["id"],
-          });
+          switch (downloadType) {
+            case "playlist": {
+              const filename = sanitize(`${json["playlist_index"]} - ${json["title"]}.mp3`);
+              const thumbnail = `${filename}.jpg`;
+              items.push({
+                itemStatus: "waiting",
+                thumbnailPath: path.join(downloadPath, thumbnail),
+                downloadPath: path.join(downloadPath, filename),
+                imageType: "cover-art",
+                playlist: json["playlist_id"],
+                index: json["playlist_index"],
+                title: json["title"],
+                url: json["url"],
+                id: json["id"],
+              });
+              break;
+            }
+            case "single": {
+              const filename = sanitize(`${json["title"]}.mp3`);
+              const thumbnail = `${filename}.jpg`;
+              items.push({
+                itemStatus: "waiting",
+                thumbnailPath: path.join(downloadPath, thumbnail),
+                downloadPath: path.join(downloadPath, filename),
+                imageType: "cover-art",
+                title: json["title"],
+                url: json["original_url"],
+                id: json["id"],
+              });
+            }
+          }
         } catch (error) {
           log.error(error);
           log.info(line);
@@ -113,19 +149,15 @@ async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloa
       resolve(items);
     });
 
-    subprocess.stdout.on("data", (data: Buffer) => {
-      const messages = data.toString().trim().split("\n");
-      for (const message of messages) {
-        lines.push(message);
-        log.silly(message);
-      }
-    });
-
     subprocess.stderr.on("data", (data: Buffer) => {
       const messages = data.toString().trim().split("\n");
       for (const message of messages) {
         log.warn(message);
       }
+    });
+
+    subprocess.stdout.on("data", (data: Buffer) => {
+      buffer += data.toString();
     });
 
     subprocess.on("error", reject);
@@ -216,17 +248,17 @@ async function performDownload({ ytdlp, ffmpeg, deno }: ToolPaths, signal: Abort
       resolve();
     });
 
-    subprocess.stdout.on("data", (data: Buffer) => {
-      const messages = data.toString().trim().split("\n");
-      for (const message of messages) {
-        log.verbose(message);
-      }
-    });
-
     subprocess.stderr.on("data", (data: Buffer) => {
       const messages = data.toString().trim().split("\n");
       for (const message of messages) {
         log.warn(message);
+      }
+    });
+
+    subprocess.stdout.on("data", (data: Buffer) => {
+      const messages = data.toString().trim().split("\n");
+      for (const message of messages) {
+        log.verbose(message);
       }
     });
 
@@ -235,25 +267,39 @@ async function performDownload({ ytdlp, ffmpeg, deno }: ToolPaths, signal: Abort
 }
 
 async function buildInfo({ url }: StartOptions): Promise<Info> {
-  const playlist = extractPlaylist(url);
-  if (!playlist) {
-    throw new Error(`Could not extract playlist id from url: ${url}`);
+  const { downloadType, playlist } = extractPlaylist(url);
+  if (downloadType === "none" || !playlist) {
+    throw new Error(`Could not extract params from url: ${url}`);
   }
 
-  const downloadsPath = getFolderPath(playlist);
-  await fs.mkdir(downloadsPath, { recursive: true });
+  await fs.mkdir(getFolderPath(playlist), { recursive: true });
+  const downloadPath = getFolderPath(playlist);
 
-  return { downloadsPath, playlist };
+  return { downloadType, downloadPath, playlist };
 }
 
-function extractPlaylist(url: string): string | null {
-  try {
-    const params = new URLSearchParams(new URL(url).search);
-    return params.get("list") || null;
-  } catch (error) {
-    log.error(error);
-    return null;
+function extractPlaylist(url: string): Params {
+  const params = new URLSearchParams(new URL(url).search);
+  let playlist = params.get("list");
+  if (playlist) {
+    return {
+      downloadType: "playlist",
+      playlist,
+    };
   }
+
+  playlist = params.get("v");
+  if (playlist) {
+    return {
+      downloadType: "single",
+      playlist,
+    };
+  }
+
+  return {
+    downloadType: "none",
+    playlist: "",
+  };
 }
 
 function getFolderPath(playlist: string): string {

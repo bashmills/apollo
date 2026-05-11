@@ -29,8 +29,7 @@ const FOLDER_NAME = "thumbnail";
 const DELAY = 1000;
 
 export async function downloadPlaylistThumbnail(options: Options, paths: ToolPaths, signal: AbortSignal) {
-  const { playlist } = options;
-  const info = await buildInfo(playlist);
+  const info = await buildInfo(options.playlist);
   const thumbnails = await fetchThumbnails(options, paths, signal);
   const sorted = sortThumbnails(thumbnails);
   await downloadThumbnail(sorted, info);
@@ -75,11 +74,18 @@ async function fetchThumbnails({ url }: Options, { ytdlp, ffmpeg, deno }: ToolPa
     const args = ["--ignore-config", "--abort-on-unavailable-fragments", "--abort-on-error", "--ffmpeg-location", ffmpeg, "--js-runtimes", `deno:${deno}`, "--skip-download", "--flat-playlist", "--dump-single-json", "--playlist-items", "0", "--no-progress", url];
     const subprocess = spawn(ytdlp, args, { signal });
     const lines: string[] = [];
+    let buffer = "";
 
     subprocess.on("close", (code: number) => {
       if (code !== 0) {
         reject(new Error(`Prefetching thumbnails failed: ${code}`));
         return;
+      }
+
+      const messages = buffer.trim().split("\n");
+      for (const message of messages) {
+        lines.push(message);
+        log.silly(message);
       }
 
       if (lines.length !== 1) {
@@ -108,19 +114,15 @@ async function fetchThumbnails({ url }: Options, { ytdlp, ffmpeg, deno }: ToolPa
       resolve(thumbnails);
     });
 
-    subprocess.stdout.on("data", (data: Buffer) => {
-      const messages = data.toString().trim().split("\n");
-      for (const message of messages) {
-        lines.push(message);
-        log.silly(message);
-      }
-    });
-
     subprocess.stderr.on("data", (data: Buffer) => {
       const messages = data.toString().trim().split("\n");
       for (const message of messages) {
         log.warn(message);
       }
+    });
+
+    subprocess.stdout.on("data", (data: Buffer) => {
+      buffer += data.toString();
     });
 
     subprocess.on("error", reject);
