@@ -8,7 +8,6 @@ import path from "path";
 interface Info {
   filepath: string;
   filename: string;
-  id: string;
 }
 
 const CACHED_REQUESTS = new Map<string, Promise<string | null>>();
@@ -29,8 +28,7 @@ export async function fetchCoverArt(id: string): Promise<string | null> {
     return request;
   }
 
-  const info = await buildInfo(id);
-  const promise = getCoverArt(info);
+  const promise = getCoverArt(id);
   CACHED_REQUESTS.set(id, promise);
   const result = await promise;
   CACHED_FILENAMES.set(id, result);
@@ -46,8 +44,9 @@ export function getCoverArtPath(id?: string): string | null {
   return null;
 }
 
-async function getCoverArt({ filepath, filename, id }: Info): Promise<string | null> {
+async function getCoverArt(id: string): Promise<string | null> {
   try {
+    const { filepath, filename } = await buildInfo(id);
     const exists = await doesExist(filepath);
     if (exists) {
       log.info(`Found cover art: ${filepath}`);
@@ -85,7 +84,7 @@ async function buildInfo(id: string): Promise<Info> {
   const filepath = getFilepath(id);
   const filename = getFilename(id);
 
-  return { filepath, filename, id };
+  return { filepath, filename };
 }
 
 function getFolderPath(): string {
