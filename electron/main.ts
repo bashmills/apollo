@@ -1,11 +1,11 @@
 import { overrideDownload, searchCustomReleases } from "./services/releases";
 import { BrowserWindow, ipcMain, protocol, dialog, app } from "electron";
 import { startDownloads, retryDownloads } from "./services/downloader";
+import { clearCoverArt, fetchCoverArt } from "./services/cover-art";
 import { loadSettings, saveSettings } from "./services/settings";
 import { Settings, Metadata, Item } from "../shared/types";
 import { checkLatestVersion } from "./services/tools";
 import { fetchThumbnail } from "./services/thumbnail";
-import { fetchCoverArt } from "./services/cover-art";
 import { exportDownloads } from "./services/saver";
 import { getCacheDirectory } from "./utils/os";
 import { APP_ROOT, DIRNAME } from "./utils/os";
@@ -341,6 +341,7 @@ ipcMain.handle("clear-cache", async (event) => {
   try {
     log.info("Clearing cache...");
     await fs.rm(getCacheDirectory(), { recursive: true, force: true });
+    clearCoverArt();
     log.info("Cache cleared");
     return true;
   } catch (error) {

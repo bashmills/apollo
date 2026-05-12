@@ -44,6 +44,10 @@ export function getCoverArtPath(id?: string): string | null {
   return null;
 }
 
+export function clearCoverArt() {
+  CACHED_FILENAMES.clear();
+}
+
 async function getCoverArt(id: string): Promise<string | null> {
   try {
     const { filepath, filename } = await buildInfo(id);
