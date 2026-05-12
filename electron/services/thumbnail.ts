@@ -51,6 +51,7 @@ export async function convertThumbnail(thumbnailPath: string, id?: string) {
 
   const outputPath = getFilepath(id);
   log.info(`${id} - Converting thumbnail: ${thumbnailPath} -> ${outputPath}`);
+  await fs.mkdir(getFolderPath(), { recursive: true });
   const buffer = await convertImage(thumbnailPath);
   await fs.writeFile(outputPath, buffer);
   await fs.rm(thumbnailPath);
