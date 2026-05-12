@@ -33,6 +33,20 @@ interface DownloadOptions {
   onShowError: (error: unknown) => void;
 }
 
+interface PlaylistJson {
+  playlist_index?: number;
+  playlist_id?: string;
+  title?: string;
+  url?: string;
+  id?: string;
+}
+
+interface SingleJson {
+  original_url?: string;
+  title?: string;
+  id?: string;
+}
+
 interface Params {
   downloadType: DownloadType;
   playlist: string;
@@ -106,35 +120,36 @@ async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloa
       const items: Item[] = [];
       for (const line of lines) {
         try {
-          const json = JSON.parse(line);
           switch (downloadType) {
             case "playlist": {
-              const filename = sanitize(`${json["playlist_index"]} - ${json["title"]}.mp3`);
+              const json = JSON.parse(line) as PlaylistJson;
+              const filename = sanitize(`${json.playlist_index} - ${json.title}.mp3`);
               const thumbnail = `${filename}.jpg`;
               items.push({
                 itemStatus: "waiting",
                 thumbnailPath: path.join(downloadPath, thumbnail),
                 downloadPath: path.join(downloadPath, filename),
                 imageType: "cover-art",
-                playlist: json["playlist_id"],
-                index: json["playlist_index"],
-                title: json["title"],
-                url: json["url"],
-                id: json["id"],
+                playlist: json.playlist_id,
+                index: json.playlist_index,
+                title: json.title,
+                url: json.url,
+                id: json.id,
               });
               break;
             }
             case "single": {
-              const filename = sanitize(`${json["title"]}.mp3`);
+              const json = JSON.parse(line) as SingleJson;
+              const filename = sanitize(`${json.title}.mp3`);
               const thumbnail = `${filename}.jpg`;
               items.push({
                 itemStatus: "waiting",
                 thumbnailPath: path.join(downloadPath, thumbnail),
                 downloadPath: path.join(downloadPath, filename),
                 imageType: "cover-art",
-                title: json["title"],
-                url: json["original_url"],
-                id: json["id"],
+                title: json.title,
+                url: json.original_url,
+                id: json.id,
               });
             }
           }

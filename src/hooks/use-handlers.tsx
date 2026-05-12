@@ -1,4 +1,4 @@
-import { ItemStatus, ImageType, Metadata, Release, Item } from "../../shared/types";
+import { ItemStatus, ImageType, Settings, Metadata, Release, Item } from "../../shared/types";
 import { invokeWithSleep } from "../utils/promise";
 import { useAppStore } from "../store/app-store";
 import { toast } from "sonner";
@@ -211,23 +211,23 @@ export function useHandlers() {
       log.info("Handle reset success");
     },
 
-    // Save personal access token handler
-    handleSavePersonalAccessToken: async (token: string) => {
-      log.info(`Handling save personal access token: ${token}`);
+    // Save settings handler
+    handleSaveSettings: async (settings: Settings) => {
+      log.info("Handling save settings...");
       const { appStatus } = useAppStore.getState();
       if (appStatus !== "waiting") {
         log.error(`Incorrect status for saving personal access token: ${appStatus}`);
         return;
       }
 
-      const success = await invokeWithSleep(() => window.backend?.savePersonalAccessToken(token), DELAY);
+      const success = await window.backend?.saveSettings(settings);
       if (!success) {
-        log.info("Handle save personal access token failed");
+        log.info("Save settings failed");
         return;
       }
 
-      toast.success("Personal access token saved");
-      log.info("Handle save personal access token success");
+      toast.success("Settings saved");
+      log.info("Save settings handled");
     },
 
     // Fetch lastest handler

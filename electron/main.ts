@@ -1,11 +1,12 @@
 import { overrideDownload, searchCustomReleases } from "./services/releases";
-import { checkLatestVersion, saveToken, getToken } from "./services/tools";
 import { BrowserWindow, ipcMain, protocol, dialog, app } from "electron";
 import { startDownloads, retryDownloads } from "./services/downloader";
+import { loadSettings, saveSettings } from "./services/settings";
+import { Settings, Metadata, Item } from "../shared/types";
+import { checkLatestVersion } from "./services/tools";
 import { fetchThumbnail } from "./services/thumbnail";
 import { fetchCoverArt } from "./services/cover-art";
 import { exportDownloads } from "./services/saver";
-import { Metadata, Item } from "../shared/types";
 import { getCacheDirectory } from "./utils/os";
 import { APP_ROOT, DIRNAME } from "./utils/os";
 import log from "electron-log/main";
@@ -294,27 +295,27 @@ ipcMain.handle("stop-download", async (event) => {
   }
 });
 
-ipcMain.handle("save-personal-access-token", async (event, token: string) => {
+ipcMain.handle("save-settings", async (event, settings: Settings) => {
   try {
-    log.info(`Saving personal access token: ${token}`);
-    await saveToken(token);
-    log.info("Token saved");
+    log.info("Saving settings...");
+    await saveSettings(settings);
+    log.info("Settings saved");
     return true;
   } catch (error) {
-    log.error(`Saving token failed: ${error}`);
+    log.error(`Saving settings failed: ${error}`);
     event.sender.send("show-error", error);
     return false;
   }
 });
 
-ipcMain.handle("get-personal-access-token", async (event) => {
+ipcMain.handle("get-settings", async (event) => {
   try {
-    log.info("Getting personal access token...");
-    const token = await getToken();
-    log.info(`Got token: ${token}`);
-    return token;
+    log.info("Getting settings...");
+    const settings = await loadSettings();
+    log.info("Got settings");
+    return settings;
   } catch (error) {
-    log.error(`Getting token failed: ${error}`);
+    log.error(`Getting settings failed: ${error}`);
     event.sender.send("show-error", error);
     return null;
   }

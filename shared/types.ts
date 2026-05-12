@@ -2,6 +2,10 @@ export type ItemStatus = "waiting" | "downloading" | "fetching" | "downloaded" |
 export type AppStatus = "waiting" | "downloading" | "downloaded" | "saving" | "saved";
 export type ImageType = "thumbnail" | "cover-art";
 
+export interface Settings {
+  personalAccessToken: string;
+}
+
 export interface Release {
   score?: number;
   secondaryTypes?: string[];

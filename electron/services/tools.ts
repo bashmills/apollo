@@ -1,11 +1,13 @@
 import { getResourcesDirectory, getDataDirectory, doesExist } from "../utils/os";
 import { NotModifiedError, RateLimitError } from "../errors";
-import { Config, writeConfig, readConfig } from "./config";
-import { safeStorage, app } from "electron";
+import { State, writeState, readState } from "./state";
 import { limiter } from "../utils/limiter";
+import { loadSettings } from "./settings";
 import log from "electron-log/main";
+import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
+import { Settings } from "../../shared/types";
 
 type ToolName = "yt-dlp" | "ffmpeg" | "deno";
 type ToolType = "download" | "bundled";
@@ -14,6 +16,14 @@ export interface ToolPaths {
   ytdlp: string;
   ffmpeg: string;
   deno: string;
+}
+
+interface ResponseJson {
+  tag_name?: string;
+  assets?: {
+    browser_download_url?: string;
+    name?: string;
+  }[];
 }
 
 interface Tool {
@@ -28,9 +38,9 @@ interface Info {
 }
 
 interface Version {
+  currentVersion: string;
   assets: Asset[];
   etag: string;
-  currentVersion: string;
 }
 
 interface Asset {
@@ -85,22 +95,23 @@ const CHECK_THRESHOLD = 1000 * 60 * 60;
 const DELAY = 1000;
 
 export async function checkLatestVersion(signal: AbortSignal) {
-  const config = await readConfig();
+  const settings = await loadSettings();
+  const state = await readState();
   const lastChecked = Date.now();
 
-  if (isWaitingForRetry(config)) {
+  if (isWaitingForRetry(state)) {
     throw new RateLimitError();
   }
 
   try {
     const info = await buildInfo();
-    if (await hasCachedVersion(config, info)) {
-      log.info(`Using cached yt-dlp version: ${config.currentVersion}`);
+    if (await hasCachedVersion(state, info)) {
+      log.info(`Using cached yt-dlp version: ${state.currentVersion}`);
       return;
     }
 
-    const version = await fetchLatestVersion(signal, config);
-    if (isSameVersion(config, version)) {
+    const version = await fetchLatestVersion(signal, settings, state);
+    if (isSameVersion(state, version)) {
       throw new NotModifiedError();
     }
 
@@ -108,8 +119,8 @@ export async function checkLatestVersion(signal: AbortSignal) {
     await downloadVersion(info, signal, version);
     log.info(`Using new yt-dlp version: ${version.currentVersion}`);
     const { currentVersion, etag } = version;
-    await writeConfig({
-      ...config,
+    await writeState({
+      ...state,
       currentVersion,
       lastChecked,
       etag,
@@ -117,8 +128,8 @@ export async function checkLatestVersion(signal: AbortSignal) {
   } catch (error) {
     if (error instanceof RateLimitError) {
       const { retryAfter } = error;
-      await writeConfig({
-        ...config,
+      await writeState({
+        ...state,
         lastChecked,
         retryAfter,
       });
@@ -127,9 +138,9 @@ export async function checkLatestVersion(signal: AbortSignal) {
     }
 
     if (error instanceof NotModifiedError) {
-      log.info(`Using same yt-dlp version: ${config.currentVersion}`);
-      await writeConfig({
-        ...config,
+      log.info(`Using same yt-dlp version: ${state.currentVersion}`);
+      await writeState({
+        ...state,
         lastChecked,
       });
 
@@ -138,21 +149,6 @@ export async function checkLatestVersion(signal: AbortSignal) {
 
     throw error;
   }
-}
-
-export async function saveToken(token: string) {
-  const oldConfig = await readConfig();
-  const config = applyToken(oldConfig, token);
-  await writeConfig(config);
-}
-
-export async function getToken(): Promise<string> {
-  const config = await readConfig();
-  if (config.personalAccessToken) {
-    return decryptToken(config.personalAccessToken);
-  }
-
-  return "";
 }
 
 export function getToolPaths(): ToolPaths {
@@ -169,13 +165,13 @@ export function getToolPaths(): ToolPaths {
   };
 }
 
-async function fetchLatestVersion(signal: AbortSignal, config: Config): Promise<Version> {
+async function fetchLatestVersion(signal: AbortSignal, settings: Settings, state: State): Promise<Version> {
   const url = new URL(GITHUB_API_URL);
   const response = await limiter(
     url,
     async () => {
       log.info(`Fetching lastest version: ${url}`);
-      const headers = getHeaders(config);
+      const headers = getHeaders(settings, state);
       const response = await fetch(url, {
         headers,
         signal,
@@ -216,26 +212,32 @@ async function fetchLatestVersion(signal: AbortSignal, config: Config): Promise<
     DELAY,
   );
 
-  const result = await response.json();
-  if (!result) {
+  const json = (await response.json()) as ResponseJson;
+  const { headers } = response;
+  if (!json) {
     throw new Error("No latest yt-dlp version found");
   }
 
-  return {
-    assets: result["assets"]?.map((asset) => {
+  const currentVersion = json.tag_name ?? "";
+  const assets =
+    json.assets?.map((asset) => {
       return {
-        downloadUrl: asset["browser_download_url"],
-        name: asset["name"],
+        downloadUrl: asset.browser_download_url ?? "",
+        name: asset.name ?? "",
       };
-    }),
-    etag: response.headers.get("etag") ?? "",
-    currentVersion: result["tag_name"],
+    }) ?? [];
+  const etag = headers.get("etag") ?? "";
+
+  return {
+    currentVersion,
+    assets,
+    etag,
   };
 }
 
 async function downloadVersion({ assetName, toolPath }: Info, signal: AbortSignal, version: Version) {
   const asset = version.assets.find((x) => x.name === assetName);
-  if (!asset) {
+  if (!asset?.downloadUrl) {
     throw new Error("No valid yt-dlp binary found");
   }
 
@@ -259,7 +261,7 @@ async function downloadVersion({ assetName, toolPath }: Info, signal: AbortSigna
   log.info(`Downloaded new version: ${toolPath}`);
 }
 
-function isWaitingForRetry({ retryAfter }: Config): boolean {
+function isWaitingForRetry({ retryAfter }: State): boolean {
   if (!retryAfter) {
     return false;
   }
@@ -272,7 +274,7 @@ function isWaitingForRetry({ retryAfter }: Config): boolean {
   return true;
 }
 
-async function hasCachedVersion({ lastChecked }: Config, { toolPath }: Info): Promise<boolean> {
+async function hasCachedVersion({ lastChecked }: State, { toolPath }: Info): Promise<boolean> {
   const exists = await doesExist(toolPath);
   if (!exists) {
     return false;
@@ -283,7 +285,7 @@ async function hasCachedVersion({ lastChecked }: Config, { toolPath }: Info): Pr
   return delay > 0;
 }
 
-function isSameVersion({ currentVersion }: Config, version: Version): boolean {
+function isSameVersion({ currentVersion }: State, version: Version): boolean {
   if (version.currentVersion === currentVersion) {
     return true;
   }
@@ -291,36 +293,20 @@ function isSameVersion({ currentVersion }: Config, version: Version): boolean {
   return false;
 }
 
-function getHeaders(config: Config): Headers {
+function getHeaders(settings: Settings, state: State): Headers {
   const headers = new Headers();
   headers.set("Accept", "application/vnd.github+json");
   headers.set("User-Agent", USER_AGENT);
 
-  if (config.personalAccessToken) {
-    headers.set("Authorization", `Bearer ${decryptToken(config.personalAccessToken)}`);
+  if (settings.personalAccessToken) {
+    headers.set("Authorization", `Bearer ${settings.personalAccessToken}`);
   }
 
-  if (config.etag) {
-    headers.set("If-None-Match", config.etag);
+  if (state.etag) {
+    headers.set("If-None-Match", state.etag);
   }
 
   return headers;
-}
-
-function applyToken(config: Config, token: string): Config {
-  const personalAccessToken = encryptToken(token);
-  return {
-    ...config,
-    personalAccessToken,
-  };
-}
-
-function decryptToken(token: string): string {
-  return safeStorage.decryptString(Buffer.from(token, "base64"));
-}
-
-function encryptToken(token: string): string {
-  return safeStorage.encryptString(token).toString("base64");
 }
 
 async function buildInfo(): Promise<Info> {
@@ -341,6 +327,10 @@ function getAssetName(toolName: ToolName): string {
   return name;
 }
 
+function getToolPath(toolName: ToolName): string {
+  return path.join(getToolDirectory(toolName), getToolName(toolName));
+}
+
 function getToolName(toolName: ToolName): string {
   const platform = process.platform;
   const name = TOOLS.get(toolName)?.toolNames?.get(platform);
@@ -349,10 +339,6 @@ function getToolName(toolName: ToolName): string {
   }
 
   return name;
-}
-
-function getToolPath(toolName: ToolName): string {
-  return path.join(getToolDirectory(toolName), getToolName(toolName));
 }
 
 function getToolDirectory(toolName: ToolName): string {

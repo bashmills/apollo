@@ -18,8 +18,8 @@ interface Window {
     retryDownload: (items: Item[]) => Promise<boolean>;
     stopDownload: () => Promise<boolean>;
 
-    savePersonalAccessToken: (token: string) => Promise<boolean>;
-    getPersonalAccessToken: () => Promise<string | null>;
+    saveSettings: (settings: Settings) => Promise<boolean>;
+    getSettings: () => Promise<Settings | null>;
 
     fetchLatest: () => Promise<boolean>;
     clearCache: () => Promise<boolean>;

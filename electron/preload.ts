@@ -1,5 +1,5 @@
 import { IpcRendererEvent, contextBridge, ipcRenderer } from "electron";
-import { Metadata, Item } from "../shared/types";
+import { Settings, Metadata, Item } from "../shared/types";
 
 contextBridge.exposeInMainWorld("backend", {
   onUpdateItems: (callback: (newItems: Item[]) => void) => {
@@ -44,8 +44,8 @@ contextBridge.exposeInMainWorld("backend", {
   retryDownload: (items: Item[]) => ipcRenderer.invoke("retry-download", items),
   stopDownload: () => ipcRenderer.invoke("stop-download"),
 
-  savePersonalAccessToken: (token: string) => ipcRenderer.invoke("save-personal-access-token", token),
-  getPersonalAccessToken: () => ipcRenderer.invoke("get-personal-access-token"),
+  saveSettings: (settings: Settings) => ipcRenderer.invoke("save-settings", settings),
+  getSettings: () => ipcRenderer.invoke("get-settings"),
 
   fetchLatest: () => ipcRenderer.invoke("fetch-latest"),
   clearCache: () => ipcRenderer.invoke("clear-cache"),

@@ -165,14 +165,14 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
       DELAY,
     );
 
-    const result = await response.json();
-    if (result["recordings"].length === 0) {
+    const json = await response.json();
+    if (json["recordings"].length === 0) {
       log.warn(`${id} - No results found using search: ${i}`);
       continue;
     }
 
     log.info(`${id} - Found results using search: ${i}`);
-    data = result;
+    data = json;
     break;
   }
 

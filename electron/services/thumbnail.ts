@@ -7,16 +7,25 @@ import log from "electron-log/main";
 import fs from "fs/promises";
 import path from "path";
 
+export interface Options {
+  playlist: string;
+  url: string;
+}
+
+interface ThumbnailJson {
+  thumbnails?: {
+    height?: number;
+    width?: number;
+    url?: string;
+    id?: string;
+  }[];
+}
+
 interface Thumbnail {
   height: number;
   width: number;
   url: string;
   id: string;
-}
-
-export interface Options {
-  playlist: string;
-  url: string;
 }
 
 interface Info {
@@ -96,13 +105,13 @@ async function fetchThumbnails({ url }: Options, { ytdlp, ffmpeg, deno }: ToolPa
       const thumbnails: Thumbnail[] = [];
       const line = lines[0];
       try {
-        const json = JSON.parse(line);
-        for (const thumbnail of json["thumbnails"] ?? []) {
+        const json = JSON.parse(line) as ThumbnailJson;
+        for (const thumbnail of json.thumbnails ?? []) {
           thumbnails.push({
-            height: thumbnail["height"] ?? 0,
-            width: thumbnail["width"] ?? 0,
-            url: thumbnail["url"] ?? "",
-            id: thumbnail["id"] ?? "",
+            height: thumbnail.height ?? 0,
+            width: thumbnail.width ?? 0,
+            url: thumbnail.url ?? "",
+            id: thumbnail.id ?? "",
           });
         }
       } catch (error) {

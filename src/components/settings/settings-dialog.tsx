@@ -1,30 +1,34 @@
+import { DialogContainer } from "../ui/dialog-container";
+import { DialogContents } from "../ui/dialog-contents";
 import { useHandlers } from "../../hooks/use-handlers";
 import { SettingsButton } from "./settings-button";
+import { Settings } from "../../../shared/types";
 import { TextField } from "../ui/text-field";
 import { useEffect, useState } from "react";
 import { Dialog } from "../ui/dialog";
-import { DialogContainer } from "../ui/dialog-container";
-import { DialogContents } from "../ui/dialog-contents";
-import { Button } from "../ui/button";
 
 interface Props {
   onClose: () => void;
 }
 
 export function SettingsDialog({ onClose }: Props) {
-  const { handleSavePersonalAccessToken, handleFetchLatest, handleClearCache } = useHandlers();
+  const { handleSaveSettings, handleFetchLatest, handleClearCache } = useHandlers();
   const [workers, setWorkers] = useState<string[]>([]);
   const [version, setVersion] = useState<string>();
   const [visible, setVisible] = useState(false);
   const [token, setToken] = useState("");
 
+  const onSave = async () => {
+    await handleSaveSettings({ personalAccessToken: token });
+  };
+
   useEffect(() => {
     let mounted = true;
 
-    async function loadPersonalAccessToken() {
-      const newToken = await window.backend.getPersonalAccessToken();
-      if (newToken !== null && mounted) {
-        setToken(newToken);
+    async function loadSettings() {
+      const value: Settings = await window.backend.getSettings();
+      if (mounted && value) {
+        setToken(value.personalAccessToken);
       }
     }
 
@@ -35,7 +39,7 @@ export function SettingsDialog({ onClose }: Props) {
       }
     }
 
-    loadPersonalAccessToken();
+    loadSettings();
     loadVersion();
 
     return () => {
@@ -55,7 +59,7 @@ export function SettingsDialog({ onClose }: Props) {
               <TextField onChange={setToken} placeholder="Token" value={token} label="token" hidden>
                 Token
               </TextField>
-              <SettingsButton onCallback={() => handleSavePersonalAccessToken(token)} setWorkers={setWorkers} workers={workers} variant="primary" worker={"token"}>
+              <SettingsButton onCallback={onSave} setWorkers={setWorkers} workers={workers} variant="primary" worker={"token"}>
                 Save Token
               </SettingsButton>
             </div>
@@ -78,9 +82,9 @@ export function SettingsDialog({ onClose }: Props) {
           </div>
         </DialogContents>
         <div className="relative w-full flex flex-col justify-center items-center">
-          <Button onClick={() => setVisible(false)} variant="success" size="small" type="button">
-            Done
-          </Button>
+          <SettingsButton onCallback={onSave} setWorkers={setWorkers} workers={workers} variant="success" worker={"save"}>
+            Save
+          </SettingsButton>
           {version && <p className="absolute bottom-0 translate-y-5 text-xs text-gray-500 truncate">{version}</p>}
         </div>
       </DialogContainer>
