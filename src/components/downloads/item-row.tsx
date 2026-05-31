@@ -30,9 +30,10 @@ export function ItemRow({ item }: Props) {
   const variant = DETAILED_BUTTON_VARIANTS.get(item.itemStatus) ?? "pending";
   const canOpen = appStatus === "downloading" || appStatus === "downloaded";
   const release = item.releases?.at(0);
+  const group = release?.group;
   const imageType = item.imageType;
   const thumbnail = item.id;
-  const coverArt = release?.group;
+  const coverArt = group;
 
   const handleShowItemDialog = () => {
     if (!canOpen) {

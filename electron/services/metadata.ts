@@ -37,8 +37,8 @@ export async function exportItemMetadata(filepath: string, item: Item) {
     {
       performerInfo: release.performer ?? release.artist,
       artist: release.artist,
-      title: release.title,
       album: release.album,
+      title: release.title,
       trackNumber: release.track?.toString(),
       partOfSet: release.disc?.toString(),
       date: release.date,
@@ -66,5 +66,6 @@ export async function importItemMetadata(signal: AbortSignal, item: Item) {
     artist: tags.artist,
     album: tags.album,
     title: tags.title,
+    date: tags.date,
   };
 }

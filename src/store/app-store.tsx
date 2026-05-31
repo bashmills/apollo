@@ -11,7 +11,7 @@ interface AppState {
   updateCustom: (custom: Release, itemId?: string) => void;
   updateItem: (item: Item) => void;
 
-  updateStatus: (appStatus: AppStatus, items: Item[]) => void;
+  updateAppStatus: (appStatus: AppStatus, items: Item[]) => void;
   setAppStatus: (appStatus: AppStatus) => void;
   setItems: (items: Item[]) => void;
   reset: () => void;
@@ -90,7 +90,7 @@ export const useAppStore = create<AppState>((set) => ({
       }),
     })),
 
-  updateStatus: (appStatus: AppStatus, items: Item[]) => set({ appStatus, items }),
+  updateAppStatus: (appStatus: AppStatus, items: Item[]) => set({ appStatus, items }),
   setAppStatus: (appStatus: AppStatus) => set({ appStatus }),
   setItems: (items: Item[]) => set({ items }),
   reset: () => set({ appStatus: "waiting", items: [] }),

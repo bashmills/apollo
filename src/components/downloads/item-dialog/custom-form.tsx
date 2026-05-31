@@ -1,3 +1,4 @@
+import { sanitizeDate, sanitizeInt, convertInt } from "../../../utils/conversion";
 import { DialogContainer } from "../../ui/dialog-container";
 import { DialogContents } from "../../ui/dialog-contents";
 import { useHandlers } from "../../../hooks/use-handlers";
@@ -14,8 +15,6 @@ interface Props {
   onSearch: (release: Release) => void;
   item: Item;
 }
-
-const NUMBER_REGEX = new RegExp("[^0-9]", "g");
 
 export function CustomForm({ onRequestClose, onSearch, item }: Props) {
   const [performer, setPerformer] = useState(item.custom?.performer ?? item.metadata?.performer ?? item.metadata?.artist ?? "");
@@ -137,25 +136,4 @@ export function CustomForm({ onRequestClose, onSearch, item }: Props) {
       </DialogContainer>
     </form>
   );
-}
-
-function sanitizeDate(value: string): string {
-  const digits = sanitizeInt(value).slice(0, 8);
-  if (digits.length > 6) {
-    return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`;
-  }
-
-  if (digits.length > 4) {
-    return `${digits.slice(0, 4)}-${digits.slice(4)}`;
-  }
-
-  return digits;
-}
-
-function sanitizeInt(value: string): string {
-  return value.replace(NUMBER_REGEX, "");
-}
-
-function convertInt(value: string): number {
-  return Number(sanitizeInt(value));
 }

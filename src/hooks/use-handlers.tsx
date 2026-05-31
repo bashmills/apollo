@@ -7,7 +7,7 @@ import log from "electron-log/renderer";
 const DELAY = 500;
 
 export function useHandlers() {
-  const { applyImageTypes, toggleImageType, updateReleases, updateRelease, updateCustom, updateStatus, setAppStatus, reset } = useAppStore.getState();
+  const { applyImageTypes, toggleImageType, updateReleases, updateRelease, updateCustom, updateAppStatus, setAppStatus, reset } = useAppStore.getState();
 
   return {
     // Apply image types handler
@@ -48,7 +48,7 @@ export function useHandlers() {
 
       const newItem = { ...item, releases: [], metadata, itemStatus: "fetching" as ItemStatus };
       const newItems = items.map((x) => (newItem.id === x.id ? newItem : x));
-      updateStatus("downloading", newItems);
+      updateAppStatus("downloading", newItems);
 
       const success = await invokeWithSleep(() => window.backend?.overrideDownload(newItems, newItem), DELAY);
       if (!success) {
@@ -111,7 +111,7 @@ export function useHandlers() {
         return;
       }
 
-      updateStatus("downloading", []);
+      updateAppStatus("downloading", []);
 
       const success = await invokeWithSleep(() => window.backend?.startDownload(url), DELAY);
       if (!success) {
@@ -135,7 +135,7 @@ export function useHandlers() {
       }
 
       const newItems = items.map((item) => (item.itemStatus === "missing" || item.itemStatus === "failed" ? { ...item, itemStatus: "waiting" as ItemStatus } : item));
-      updateStatus("downloading", newItems);
+      updateAppStatus("downloading", newItems);
 
       const success = await invokeWithSleep(() => window.backend?.retryDownload(newItems), DELAY);
       if (!success) {
@@ -183,7 +183,7 @@ export function useHandlers() {
       }
 
       const newItems = items.map((item) => (item.itemStatus === "downloaded" ? { ...item, itemStatus: "saving" as ItemStatus } : item));
-      updateStatus("saving", newItems);
+      updateAppStatus("saving", newItems);
 
       const success = await invokeWithSleep(() => window.backend?.exportDownload(newItems, folder), DELAY);
       if (!success) {
