@@ -51,14 +51,14 @@ export function ItemGroup({ release, items }: Props) {
   };
 
   useEffect(() => {
-    const allThumbnail = items.every((i) => i.imageType === "thumbnail");
-    const allCoverArt = items.every((i) => i.imageType === "cover-art");
+    const setThumbnailImageType = imageType !== "thumbnail" ? items.every((i) => i.imageType === "thumbnail") : false;
+    const setCoverArtImageType = imageType !== "cover-art" ? items.every((i) => i.imageType === "cover-art") : false;
 
-    if (allThumbnail) {
+    if (setThumbnailImageType) {
       setImageType("thumbnail");
     }
 
-    if (allCoverArt) {
+    if (setCoverArtImageType) {
       setImageType("cover-art");
     }
   }, [imageType, items]);
