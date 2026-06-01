@@ -37,7 +37,7 @@ export function MetadataForm({ onRequestClose, item }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="w-full flex flex-col justify-center items-center min-h-0" onSubmit={handleSubmit}>
       <DialogContainer>
         <DialogContents>
           <TextField onChange={setPerformer} placeholder="Album Artist" value={performer} label="album-artist">
@@ -56,7 +56,7 @@ export function MetadataForm({ onRequestClose, item }: Props) {
             Date
           </TextField>
         </DialogContents>
-        <div className="w-full flex justify-center items-center">
+        <div className="w-full flex flex-col justify-center items-center">
           <Button variant="primary" size="medium" type="submit">
             Fetch Metadata
           </Button>
