@@ -1,4 +1,5 @@
 import { RateLimitError, NotModifiedError, AbortError } from "../errors";
+import log from "electron-log/main";
 
 const LAST_REQUEST_TIMES = new Map<string, number>();
 const QUEUES = new Map<string, Promise<void>>();
@@ -26,6 +27,7 @@ async function retry<T>(fn: () => Promise<T>, ms: number): Promise<T> {
         throw error;
       }
 
+      log.warn(error);
       last = error;
     }
 
