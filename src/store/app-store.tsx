@@ -1,4 +1,4 @@
-import { AppStatus, ItemStatus, ImageType, Release, Item } from "../../shared/types";
+import { MetadataType, AppStatus, ItemStatus, ImageType, Release, Item } from "../../shared/types";
 import { create } from "zustand";
 
 interface AppState {
@@ -12,10 +12,12 @@ interface AppState {
   updateItem: (item: Item) => void;
 
   updateAppStatus: (appStatus: AppStatus, items: Item[]) => void;
+  setMetadataType: (metadataType: MetadataType) => void;
   setAppStatus: (appStatus: AppStatus) => void;
   setItems: (items: Item[]) => void;
   reset: () => void;
 
+  metadataType: MetadataType;
   appStatus: AppStatus;
   items: Item[];
 }
@@ -91,10 +93,12 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   updateAppStatus: (appStatus: AppStatus, items: Item[]) => set({ appStatus, items }),
+  setMetadataType: (metadataType: MetadataType) => set({ metadataType }),
   setAppStatus: (appStatus: AppStatus) => set({ appStatus }),
   setItems: (items: Item[]) => set({ items }),
-  reset: () => set({ appStatus: "waiting", items: [] }),
+  reset: () => set({ metadataType: "musicbrainz", appStatus: "waiting", items: [] }),
 
+  metadataType: "musicbrainz",
   appStatus: "waiting",
   items: [],
 }));

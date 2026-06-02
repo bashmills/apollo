@@ -1,9 +1,9 @@
 import { overrideDownload, searchCustomReleases } from "./services/releases";
 import { BrowserWindow, ipcMain, protocol, dialog, app } from "electron";
+import { MetadataType, Settings, Metadata, Item } from "../shared/types";
 import { startDownloads, retryDownloads } from "./services/downloader";
 import { clearCoverArt, fetchCoverArt } from "./services/cover-art";
 import { loadSettings, saveSettings } from "./services/settings";
-import { Settings, Metadata, Item } from "../shared/types";
 import { checkLatestVersion } from "./services/tools";
 import { fetchThumbnail } from "./services/thumbnail";
 import { exportDownloads } from "./services/saver";
@@ -220,7 +220,7 @@ ipcMain.handle("override-download", async (event, items: Item[], item: Item) => 
   }
 });
 
-ipcMain.handle("start-download", async (event, url: string) => {
+ipcMain.handle("start-download", async (event, metadataType: MetadataType, url: string) => {
   try {
     log.info(`Starting download: ${url}`);
     const signal = resetAbortController();
@@ -235,6 +235,7 @@ ipcMain.handle("start-download", async (event, url: string) => {
         onShowError: (error: unknown) => {
           event.sender.send("show-error", error);
         },
+        metadataType,
         url,
       },
       signal,

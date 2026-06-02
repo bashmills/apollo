@@ -28,7 +28,7 @@ export function GroupDetails({ onClose, release, items }: Props) {
       <DialogContents>
         <GroupDetail label="Secondary Types" value={release?.secondaryTypes?.join(", ")} />
         <GroupDetail label="Primary Type" value={release?.primaryType} />
-        <GroupDetail label="Album Artist" value={release?.performer ?? release?.artist} />
+        <GroupDetail label="Album Artist" value={release?.performer} />
         <GroupDetail label="Album" value={release?.album} />
         <GroupDetail label="Country" value={release?.country} />
         <GroupDetail label="Format" value={release?.format} />

@@ -1,9 +1,9 @@
 import { downloadPlaylistThumbnail, convertThumbnail } from "./thumbnail";
 import { fetchItemReleases, sortAllReleases } from "./releases";
 import { getCacheDirectory, doesExist } from "../utils/os";
+import { MetadataType, Item } from "../../shared/types";
 import { ToolPaths, getToolPaths } from "./tools";
 import { importItemMetadata } from "./metadata";
-import { Item } from "../../shared/types";
 import sanitize from "sanitize-filename";
 import { AbortError } from "../errors";
 import { spawn } from "child_process";
@@ -17,6 +17,7 @@ export interface StartOptions {
   onUpdateItems: (newItems: Item[]) => void;
   onUpdateItem: (newItem: Item) => void;
   onShowError: (error: unknown) => void;
+  metadataType: MetadataType;
   url: string;
 }
 
@@ -34,8 +35,11 @@ interface DownloadOptions {
 }
 
 interface PlaylistJson {
+  playlist_channel?: string;
+  playlist_title?: string;
   playlist_index?: number;
   playlist_id?: string;
+  channel?: string;
   title?: string;
   url?: string;
   id?: string;
@@ -43,6 +47,7 @@ interface PlaylistJson {
 
 interface SingleJson {
   original_url?: string;
+  channel?: string;
   title?: string;
   id?: string;
 }
@@ -97,7 +102,7 @@ export async function retryDownloads(options: RetryOptions, signal: AbortSignal)
   );
 }
 
-async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloadType, downloadPath }: Info, { ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal): Promise<Item[]> {
+async function prefetchDownloads({ onUpdateItems, metadataType, url }: StartOptions, { downloadType, downloadPath }: Info, { ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal): Promise<Item[]> {
   return new Promise((resolve, reject) => {
     log.info(`Prefetching downloads: ${url}`);
     const args = ["--ignore-config", "--abort-on-unavailable-fragments", "--abort-on-error", "--ffmpeg-location", ffmpeg, "--js-runtimes", `deno:${deno}`, "--skip-download", "--flat-playlist", "--dump-json", "--no-progress", url];
@@ -129,12 +134,16 @@ async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloa
                 itemStatus: "waiting",
                 thumbnailPath: path.join(downloadPath, thumbnail),
                 downloadPath: path.join(downloadPath, filename),
-                imageType: "cover-art",
-                playlist: json.playlist_id,
-                index: json.playlist_index,
+                imageType: metadataType === "musicbrainz" ? "cover-art" : "thumbnail",
+                playlistChannel: json.playlist_channel,
+                playlistTitle: json.playlist_title,
+                playlistIndex: json.playlist_index,
+                playlistId: json.playlist_id,
+                channel: json.channel,
                 title: json.title,
                 url: json.url,
                 id: json.id,
+                metadataType,
               });
               break;
             }
@@ -146,10 +155,12 @@ async function prefetchDownloads({ onUpdateItems, url }: StartOptions, { downloa
                 itemStatus: "waiting",
                 thumbnailPath: path.join(downloadPath, thumbnail),
                 downloadPath: path.join(downloadPath, filename),
-                imageType: "cover-art",
+                imageType: metadataType === "musicbrainz" ? "cover-art" : "thumbnail",
+                channel: json.channel,
                 title: json.title,
                 url: json.original_url,
                 id: json.id,
+                metadataType,
               });
             }
           }
@@ -210,8 +221,17 @@ async function performDownloads(options: DownloadOptions, paths: ToolPaths, sign
       item.itemStatus = "fetching";
       onUpdateItem(item);
 
-      await importItemMetadata(signal, item);
-      await fetchItemReleases(signal, item);
+      switch (item.metadataType) {
+        case "musicbrainz": {
+          await importItemMetadata(signal, item);
+          await fetchItemReleases(signal, item);
+          break;
+        }
+        case "youtube": {
+          await importItemMetadata(signal, item);
+          break;
+        }
+      }
 
       item.itemStatus = "downloaded";
       onUpdateItem(item);

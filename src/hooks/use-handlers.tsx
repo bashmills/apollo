@@ -105,7 +105,7 @@ export function useHandlers() {
     // Submit handler
     handleSubmit: async (url: string) => {
       log.info(`Handling submit: ${url}`);
-      const { appStatus } = useAppStore.getState();
+      const { metadataType, appStatus } = useAppStore.getState();
       if (appStatus !== "waiting") {
         log.error(`Incorrect status for submit: ${appStatus}`);
         return;
@@ -113,7 +113,7 @@ export function useHandlers() {
 
       updateAppStatus("downloading", []);
 
-      const success = await invokeWithSleep(() => window.backend?.startDownload(url), DELAY);
+      const success = await invokeWithSleep(() => window.backend?.startDownload(metadataType, url), DELAY);
       if (!success) {
         log.info("Handle submit failed");
         reset();

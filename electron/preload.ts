@@ -1,5 +1,5 @@
 import { IpcRendererEvent, contextBridge, ipcRenderer } from "electron";
-import { Settings, Metadata, Item } from "../shared/types";
+import { MetadataType, Settings, Metadata, Item } from "../shared/types";
 
 contextBridge.exposeInMainWorld("backend", {
   onUpdateItems: (callback: (newItems: Item[]) => void) => {
@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld("backend", {
   chooseFolder: () => ipcRenderer.invoke("choose-folder"),
 
   overrideDownload: (items: Item[], item: Item) => ipcRenderer.invoke("override-download", items, item),
-  startDownload: (url: string) => ipcRenderer.invoke("start-download", url),
+  startDownload: (metadataType: MetadataType, url: string) => ipcRenderer.invoke("start-download", metadataType, url),
   retryDownload: (items: Item[]) => ipcRenderer.invoke("retry-download", items),
   stopDownload: () => ipcRenderer.invoke("stop-download"),
 

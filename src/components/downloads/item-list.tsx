@@ -12,10 +12,11 @@ interface Grouping {
 const NUM_SKELETONS = 6;
 
 export function ItemList() {
+  const metadataType = useAppStore((x) => x.metadataType);
   const appStatus = useAppStore((x) => x.appStatus);
   const items = useAppStore((x) => x.items);
 
-  const showGroups = appStatus === "downloaded" || appStatus === "saving" || appStatus === "saved";
+  const showGroups = (appStatus === "downloaded" || appStatus === "saving" || appStatus === "saved") && metadataType === "musicbrainz";
   const groups = showGroups
     ? items.reduce<Grouping[]>((groups, item) => {
         const release = item.releases?.at(0);

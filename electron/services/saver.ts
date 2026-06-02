@@ -1,3 +1,4 @@
+import { getPerformer, getAlbum, getTitle, getTrack, getDisc } from "../../shared/utils";
 import { getCacheDirectory } from "../utils/os";
 import { exportItemMetadata } from "./metadata";
 import { Item } from "../../shared/types";
@@ -52,18 +53,13 @@ async function saveItem(sourcePath: string, folder: string, item: Item) {
     throw new Error("Invalid filepath to save");
   }
 
-  const release = item.releases?.at(0);
-  if (!release) {
-    throw new Error("Invalid release");
-  }
+  const track = getTrack(item) ?? item.playlistIndex ?? 1;
+  const performer = sanitize(getPerformer(item));
+  const album = sanitize(getAlbum(item));
+  const title = sanitize(getTitle(item));
+  const disc = getDisc(item) ?? 1;
 
-  const performer = sanitize(release.performer ?? release.artist ?? "Unknown Artist");
-  const title = sanitize(release.title ?? item.title ?? "Unknown Title");
-  const album = sanitize(release.album ?? "Unknown Album");
-  const track = release.track ?? item.index ?? 0;
-  const disc = release.disc ?? 0;
-
-  const filename = sanitize(`${paddingFunc(2, disc)} ${paddingFunc(2, track)} - ${title}.mp3`);
+  const filename = sanitize(`${paddingFunc(2, disc)} - ${paddingFunc(3, track)} - ${title}.mp3`);
   let destPath = path.join(folder, performer, album);
   await fs.mkdir(destPath, { recursive: true });
   destPath = path.join(destPath, filename);

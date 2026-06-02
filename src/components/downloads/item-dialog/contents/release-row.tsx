@@ -1,3 +1,4 @@
+import { getReleasePerformer, getReleaseArtist, getReleaseAlbum, getReleaseTitle } from "../../../../../shared/utils";
 import { DetailedButton } from "../../../ui/detailed-button";
 import { Release } from "../../../../../shared/types";
 import { CoverArt } from "../../../ui/cover-art";
@@ -15,10 +16,10 @@ export function ReleaseRow({ onSelect, release }: Props) {
           <CoverArt className="size-12" id={release.group} />
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="font-medium text-gray-200 truncate">{release.title ?? "Unknown Title"}</p>
-          <p className="text-sm text-gray-400 truncate">{release.performer ?? release?.artist ?? "Unknown Album Aritst"}</p>
-          <p className="text-sm text-gray-400 truncate">{release.artist ?? "Unknown Artist"}</p>
-          <p className="text-sm text-gray-400 truncate">{release.album ?? "Unknown Album"}</p>
+          <p className="font-medium text-gray-200 truncate">{getReleaseTitle(release)}</p>
+          <p className="text-sm text-gray-400 truncate">{getReleasePerformer(release)}</p>
+          <p className="text-sm text-gray-400 truncate">{getReleaseArtist(release)}</p>
+          <p className="text-sm text-gray-400 truncate">{getReleaseAlbum(release)}</p>
         </div>
       </div>
     </DetailedButton>

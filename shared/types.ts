@@ -1,5 +1,6 @@
 export type ItemStatus = "waiting" | "downloading" | "fetching" | "downloaded" | "saving" | "saved" | "missing" | "failed";
 export type AppStatus = "waiting" | "downloading" | "downloaded" | "saving" | "saved";
+export type MetadataType = "musicbrainz" | "youtube";
 export type ImageType = "thumbnail" | "cover-art";
 
 export interface Settings {
@@ -34,6 +35,7 @@ export interface Metadata {
 }
 
 export interface Item {
+  metadataType: MetadataType;
   itemStatus: ItemStatus;
   thumbnailPath: string;
   downloadPath: string;
@@ -41,8 +43,11 @@ export interface Item {
   releases?: Release[];
   metadata?: Metadata;
   custom?: Release;
-  playlist?: string;
-  index?: number;
+  playlistChannel?: string;
+  playlistTitle?: string;
+  playlistIndex?: number;
+  playlistId?: string;
+  channel?: string;
   title?: string;
   url?: string;
   id?: string;

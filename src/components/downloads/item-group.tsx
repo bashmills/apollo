@@ -1,3 +1,4 @@
+import { getReleasePerformer, getReleaseAlbum } from "../../../shared/utils";
 import { ImageType, Release, Item } from "../../../shared/types";
 import { MouseEvent, useEffect, useState } from "react";
 import { DetailedButton } from "../ui/detailed-button";
@@ -23,7 +24,7 @@ export function ItemGroup({ release, items }: Props) {
   const variant = release ? (release.total === items.length ? "success" : "warning") : "error";
   const matches = release?.total ? `${items.length} / ${release.total}` : items.length;
   const canOpen = appStatus === "downloading" || appStatus === "downloaded";
-  const thumbnail = items.at(0)?.playlist;
+  const thumbnail = items.at(0)?.playlistId;
   const coverArt = release?.group;
 
   const handleToggleExpanded = (event: MouseEvent<HTMLButtonElement>) => {
@@ -79,8 +80,8 @@ export function ItemGroup({ release, items }: Props) {
               <ImageSwitch className="size-24" onClick={handleApplyImageTypesCallback} imageType={imageType} thumbnail={thumbnail} coverArt={coverArt} />
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="font-medium text-gray-200 truncate">{release?.album ?? "Unknown Album"}</p>
-              <p className="text-sm text-gray-400 truncate">{release?.performer ?? release?.artist ?? "Unknown Album Artist"}</p>
+              <p className="font-medium text-gray-200 truncate">{getReleaseAlbum(release)}</p>
+              <p className="text-sm text-gray-400 truncate">{getReleasePerformer(release)}</p>
               <p className="text-sm text-gray-400 truncate">{matches}</p>
             </div>
             <div className="shrink-0">

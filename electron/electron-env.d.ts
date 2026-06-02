@@ -14,7 +14,7 @@ interface Window {
     chooseFolder: () => Promise<string>;
 
     overrideDownload: (items: Item[], item: Item) => Promise<boolean>;
-    startDownload: (url: string) => Promise<boolean>;
+    startDownload: (metadataType: MetadataType, url: string) => Promise<boolean>;
     retryDownload: (items: Item[]) => Promise<boolean>;
     stopDownload: () => Promise<boolean>;
 

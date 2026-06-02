@@ -1,3 +1,4 @@
+import { getReleaseArtist, getReleaseTitle, getPerformer, getArtist, getAlbum, getTitle } from "../../../shared/utils";
 import { DetailedButton, Variant } from "../ui/detailed-button";
 import { ItemStatus, Item } from "../../../shared/types";
 import { MouseEvent, useEffect, useState } from "react";
@@ -23,12 +24,13 @@ const DETAILED_BUTTON_VARIANTS = new Map<ItemStatus, Variant>([
 ]);
 
 export function ItemRow({ item }: Props) {
+  const metadataType = useAppStore((x) => x.metadataType);
   const appStatus = useAppStore((x) => x.appStatus);
   const { handleToggleImageType } = useHandlers();
   const [open, setOpen] = useState(false);
 
+  const canOpen = (appStatus === "downloading" || appStatus === "downloaded") && metadataType === "musicbrainz";
   const variant = DETAILED_BUTTON_VARIANTS.get(item.itemStatus) ?? "pending";
-  const canOpen = appStatus === "downloading" || appStatus === "downloaded";
   const release = item.releases?.at(0);
   const group = release?.group;
   const imageType = item.imageType;
@@ -68,10 +70,18 @@ export function ItemRow({ item }: Props) {
           </div>
           <div className="flex-1 min-w-0 text-left">
             <p className="font-medium truncate">{item.title ?? "Invalid Title"}</p>
-            {(appStatus === "downloaded" || appStatus === "saving" || appStatus === "saved") && (
+            {(appStatus === "downloaded" || appStatus === "saving" || appStatus === "saved") && metadataType === "musicbrainz" && (
               <>
-                <p className="font-medium text-gray-200 truncate">{release?.title ?? "Unknown Title"}</p>
-                <p className="text-sm text-gray-400 truncate">{release?.artist ?? "Unknown Artist"}</p>
+                <p className="font-medium text-gray-200 truncate">{getReleaseTitle(release)}</p>
+                <p className="text-sm text-gray-400 truncate">{getReleaseArtist(release)}</p>
+              </>
+            )}
+            {(appStatus === "downloaded" || appStatus === "saving" || appStatus === "saved") && metadataType === "youtube" && (
+              <>
+                <p className="font-medium text-gray-200 truncate">{getTitle(item)}</p>
+                <p className="text-sm text-gray-400 truncate">{getPerformer(item)}</p>
+                <p className="text-sm text-gray-400 truncate">{getArtist(item)}</p>
+                <p className="text-sm text-gray-400 truncate">{getAlbum(item)}</p>
               </>
             )}
           </div>

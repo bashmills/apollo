@@ -29,7 +29,7 @@ export function ReleaseDetails({ onRequestClose, release, item }: Props) {
         <ReleaseDetail label="Score" value={release?.score?.toString()} />
         <ReleaseDetail label="Secondary Types" value={release?.secondaryTypes?.join(", ")} />
         <ReleaseDetail label="Primary Type" value={release?.primaryType} />
-        <ReleaseDetail label="Album Artist" value={release?.performer ?? release?.artist} />
+        <ReleaseDetail label="Album Artist" value={release?.performer} />
         <ReleaseDetail label="Artist" value={release?.artist} />
         <ReleaseDetail label="Album" value={release?.album} />
         <ReleaseDetail label="Title" value={release?.title} />
