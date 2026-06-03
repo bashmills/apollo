@@ -3,7 +3,7 @@
   "description": "Download music playlists with metadata",
   "author": "Bash Mills",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "engines": {
     "node": "24.15.0"
