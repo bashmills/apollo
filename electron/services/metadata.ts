@@ -21,16 +21,14 @@ export async function exportItemMetadata(filepath: string, item: Item) {
 
   const trackNumber = getTrack(item)?.toString();
   const partOfSet = getDisc(item)?.toString();
-  const image = hasImage
-    ? {
-        type: {
-          id: TagConstants.AttachedPicture.PictureType.FRONT_COVER,
-        },
-        imageBuffer: await fs.readFile(path),
-        description: "Front cover",
-        mime: "image/jpeg",
-      }
-    : undefined;
+  const image = hasImage ? {
+    type: {
+      id: TagConstants.AttachedPicture.PictureType.FRONT_COVER,
+    },
+    imageBuffer: await fs.readFile(path),
+    description: "Front cover",
+    mime: "image/jpeg",
+  } : undefined;
   const year = getDate(item)?.slice(0, 4);
 
   await ID3.write(

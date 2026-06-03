@@ -26,62 +26,52 @@ export const useAppStore = create<AppState>((set) => ({
   applyImageTypes: (itemIds: Set<string | undefined>, imageType: ImageType) =>
     set((state) => ({
       items: state.items.map((item) =>
-        itemIds.has(item.id)
-          ? {
-              ...item,
-              imageType,
-            }
-          : item,
+        itemIds.has(item.id) ? {
+          ...item,
+          imageType,
+        } : item,
       ),
     })),
 
   toggleImageType: (itemId?: string) =>
     set((state) => ({
       items: state.items.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              imageType: item.imageType !== "thumbnail" ? "thumbnail" : "cover-art",
-            }
-          : item,
+        item.id === itemId ? {
+          ...item,
+          imageType: item.imageType !== "thumbnail" ? "thumbnail" : "cover-art",
+        } : item,
       ),
     })),
 
   updateReleases: (itemIds: Set<string | undefined>, releaseId?: string) =>
     set((state) => ({
       items: state.items.map((item) =>
-        itemIds.has(item.id)
-          ? {
-              ...item,
-              releases: [...(item.releases ?? []).filter((x) => releaseId === x.id), ...(item.releases ?? []).filter((x) => releaseId !== x.id)],
-              itemStatus: "downloaded" as ItemStatus,
-            }
-          : item,
+        itemIds.has(item.id) ? {
+          ...item,
+          releases: [...(item.releases ?? []).filter((x) => releaseId === x.id), ...(item.releases ?? []).filter((x) => releaseId !== x.id)],
+          itemStatus: "downloaded" as ItemStatus,
+        } : item,
       ),
     })),
 
   updateRelease: (release: Release, itemId?: string) =>
     set((state) => ({
       items: state.items.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              releases: [release, ...(item.releases ?? []).filter((x) => release.id !== x.id)],
-              itemStatus: "downloaded" as ItemStatus,
-            }
-          : item,
+        item.id === itemId ? {
+          ...item,
+          releases: [release, ...(item.releases ?? []).filter((x) => release.id !== x.id)],
+          itemStatus: "downloaded" as ItemStatus,
+        } : item,
       ),
     })),
 
   updateCustom: (custom: Release, itemId?: string) =>
     set((state) => ({
       items: state.items.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              custom,
-            }
-          : item,
+        item.id === itemId ? {
+          ...item,
+          custom,
+        } : item,
       ),
     })),
 
