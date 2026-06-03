@@ -13,22 +13,16 @@ import path from "path";
 
 type DownloadType = "playlist" | "single" | "none";
 
-export interface StartOptions {
-  onUpdateItems: (newItems: Item[]) => void;
-  onUpdateItem: (newItem: Item) => void;
-  onShowError: (error: unknown) => void;
+export interface StartOptions extends Callbacks {
   metadataType: MetadataType;
   url: string;
 }
 
-export interface RetryOptions {
-  onUpdateItems: (newItems: Item[]) => void;
-  onUpdateItem: (newItem: Item) => void;
-  onShowError: (error: unknown) => void;
+export interface RetryOptions extends Callbacks {
   items: Item[];
 }
 
-interface DownloadOptions {
+interface Callbacks {
   onUpdateItems: (newItems: Item[]) => void;
   onUpdateItem: (newItem: Item) => void;
   onShowError: (error: unknown) => void;
@@ -190,8 +184,8 @@ async function prefetchDownloads({ onUpdateItems, metadataType, url }: StartOpti
   });
 }
 
-async function performDownloads(options: DownloadOptions, paths: ToolPaths, signal: AbortSignal, items: Item[]) {
-  const { onUpdateItems, onUpdateItem, onShowError } = options;
+async function performDownloads(callbacks: Callbacks, paths: ToolPaths, signal: AbortSignal, items: Item[]) {
+  const { onUpdateItems, onUpdateItem, onShowError } = callbacks;
   for (const item of items) {
     try {
       if (item.itemStatus !== "waiting") {

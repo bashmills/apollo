@@ -7,7 +7,7 @@ import log from "electron-log/main";
 import fs from "fs/promises";
 import path from "path";
 
-interface Options {
+export interface Options {
   onUpdateItem: (newItem: Item) => void;
   folder: string;
   items: Item[];

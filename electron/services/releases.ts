@@ -16,7 +16,7 @@ export interface CustomOptions {
   item: Item;
 }
 
-interface MetadataOptions {
+export interface MetadataOptions {
   metadata?: Metadata;
   title?: string;
   id?: string;
