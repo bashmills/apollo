@@ -46,7 +46,7 @@ async function copyToIntermediateFolder(intermediatePath: string, item: Item): P
 
 async function saveItem(sourcePath: string, folder: string, item: Item) {
   const paddingFunc = (padding: number, value?: number): string => {
-    return value ? `${String(value).padStart(padding, "0")} -` : "";
+    return value ? `${String(value).padStart(padding, "0")} - ` : "";
   };
 
   if (!sourcePath) {
@@ -59,7 +59,7 @@ async function saveItem(sourcePath: string, folder: string, item: Item) {
   const title = sanitize(getTitle(item));
   const disc = getDisc(item);
 
-  const filename = sanitize(`${paddingFunc(2, disc)} ${paddingFunc(3, track)} ${title}.mp3`);
+  const filename = sanitize(`${paddingFunc(2, disc)}${paddingFunc(3, track)}${title}.mp3`);
   let destPath = path.join(folder, performer, album);
   await fs.mkdir(destPath, { recursive: true });
   destPath = path.join(destPath, filename);
