@@ -2,7 +2,6 @@ import { Release, Item, Metadata } from "../../shared/types";
 import { limiter } from "../utils/limiter";
 import log from "electron-log/main";
 import { app } from "electron";
-import Fuse from "fuse.js";
 
 export interface OverrideOptions {
   onUpdateItem: (newItem: Item) => void;
@@ -30,7 +29,7 @@ interface Search {
 const MUSICBRAINZ_URL = "https://musicbrainz.org/ws/2/recording";
 const USER_AGENT = `Apollo/${app.getVersion()} ( bashmills@proton.me )`;
 const MAPPING_THRESHOLD = 0.005;
-const SCORE_THRESHOLD = 0.5;
+const SCORE_THRESHOLD = 50;
 const TOTAL_THRESHOLD = 4;
 const COUNT_THRESHOLD = 4;
 const DELAY = 1000;
@@ -87,30 +86,6 @@ async function performOverride({ onUpdateItem, onShowError, items, item }: Overr
 }
 
 async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: AbortSignal): Promise<Release[]> {
-  const artistFunc = (artist?: string): number | undefined => {
-    return fuse
-      .search({ artist: artist ?? "" })
-      .map((x) => x.score ?? 1.0)
-      .sort()
-      .at(0);
-  };
-
-  const albumFunc = (album?: string): number | undefined => {
-    return fuse
-      .search({ album: album ?? "" })
-      .map((x) => x.score ?? 1.0)
-      .sort()
-      .at(0);
-  };
-
-  const titleFunc = (title?: string): number | undefined => {
-    return fuse
-      .search({ title: title ?? "" })
-      .map((x) => x.score ?? 1.0)
-      .sort()
-      .at(0);
-  };
-
   const trackFunc = (value?: number): number | undefined => {
     return value !== undefined ? value + 1 : undefined;
   };
@@ -184,6 +159,7 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
   for (const recording of data["recordings"] ?? []) {
     for (const release of recording["releases"] ?? []) {
       releases.push({
+        score: recording["score"],
         secondaryTypes: release["release-group"]?.["secondary-types"],
         primaryType: release["release-group"]?.["primary-type"],
         performer: release["artist-credit"]?.map((x) => x["name"] + (x["joinphrase"] ?? "")).join(""),
@@ -201,17 +177,6 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
         id: release["id"],
       });
     }
-  }
-
-  const fuse = new Fuse([metadata], {
-    keys: ["artist", "album", "title"],
-    isCaseSensitive: false,
-    ignoreDiacritics: true,
-    includeScore: true,
-  });
-
-  for (const release of releases) {
-    release.score = ((artistFunc(release.artist) ?? 1.0) + (albumFunc(release.album) ?? 1.0) + (titleFunc(release.title) ?? 1.0)) / 3.0;
   }
 
   return releases;
@@ -295,7 +260,7 @@ function sortReleases(mapping: Map<string, number> | null, item: Item) {
   };
 
   item.releases = item.releases?.sort((a, b) => {
-    const score = (a.score ?? 1.0) - (b.score ?? 1.0);
+    const score = (b.score ?? 0) - (a.score ?? 0);
     if (Math.abs(score) >= SCORE_THRESHOLD) {
       return score;
     }
@@ -358,6 +323,14 @@ function sortReleases(mapping: Map<string, number> | null, item: Item) {
     result = existsFunc((x) => x.date, a, b);
     if (result !== 0) {
       return result;
+    }
+
+    if ((a.group ?? "") > (b.group ?? "")) {
+      return -1;
+    }
+
+    if ((a.group ?? "") < (b.group ?? "")) {
+      return 1;
     }
 
     if ((a.id ?? "") > (b.id ?? "")) {
