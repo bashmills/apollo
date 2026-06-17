@@ -21,7 +21,7 @@ export function ItemGroup({ release, items }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [open, setOpen] = useState(false);
 
-  const variant = release ? (release.total === items.length ? "success" : "warning") : "error";
+  const variant = release ? (!hasDuplicates(items) ? (release.total === items.length ? "success" : "warning") : "error") : "pending";
   const matches = release?.total ? `${items.length} / ${release.total}` : items.length;
   const canOpen = appStatus === "downloading" || appStatus === "downloaded";
   const thumbnail = items.at(0)?.playlistId;
@@ -97,4 +97,23 @@ export function ItemGroup({ release, items }: Props) {
       </div>
     </>
   );
+}
+
+function hasDuplicates(items: Item[]): boolean {
+  const seen = new Set<string>();
+  for (const item of items) {
+    const release = item.releases?.[0];
+    if (!release?.key || !release?.id) {
+      continue;
+    }
+
+    const id = `${release.key}:${release.id}`;
+    if (seen.has(id)) {
+      return true;
+    }
+
+    seen.add(id);
+  }
+
+  return false;
 }

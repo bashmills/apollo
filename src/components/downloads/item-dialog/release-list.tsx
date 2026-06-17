@@ -2,6 +2,7 @@ import { ReleaseRowSkeleton, ReleaseRow } from "./contents/release-row";
 import { DialogContainer } from "../../ui/dialog-container";
 import { DialogContents } from "../../ui/dialog-contents";
 import { Item, Release } from "../../../../shared/types";
+import { getReleaseKey } from "../../../utils/release";
 import { Button } from "../../ui/button";
 import { Icon } from "../../ui/icon";
 
@@ -22,7 +23,7 @@ export function ReleaseList({ onOverride, onCustom, onSelect, item }: Props) {
     <DialogContainer>
       <DialogContents>
         {isLoading && Array.from({ length: NUM_SKELETONS }).map((_, index) => <ReleaseRowSkeleton key={index} />)}
-        {!isLoading && hasReleases && item.releases?.map((release, index) => <ReleaseRow onSelect={() => onSelect(release)} release={release} key={release.id ?? index} />)}
+        {!isLoading && hasReleases && item.releases?.map((release, index) => <ReleaseRow onSelect={() => onSelect(release)} release={release} key={getReleaseKey(release) ?? index} />)}
         {!isLoading && !hasReleases && (
           <div className="flex justify-center items-center min-h-64">
             <Icon className="size-5" icon="error">

@@ -4,6 +4,7 @@ import { DialogContents } from "../../ui/dialog-contents";
 import { useHandlers } from "../../../hooks/use-handlers";
 import { Release, Item } from "../../../../shared/types";
 import { invokeWithSleep } from "../../../utils/promise";
+import { getReleaseKey } from "../../../utils/release";
 import { useEffect, useState } from "react";
 import { Button } from "../../ui/button";
 
@@ -85,7 +86,7 @@ export function SearchList({ onRequestClose, release, item }: Props) {
     <DialogContainer>
       <DialogContents>
         <div className="w-full grid grid-cols-[repeat(auto-fill,7rem)] justify-around gap-2">
-          {hasReleases && releases.map((x, index) => <SearchRow onSelect={() => handleSelect(x)} selected={selected} release={x} key={x?.id ?? index} />)}
+          {hasReleases && releases.map((x, index) => <SearchRow onSelect={() => handleSelect(x)} selected={selected} release={x} key={getReleaseKey(x) ?? index} />)}
           {!hasReleases && Array.from({ length: NUM_SKELETONS }).map((_, index) => <SearchRowSkeleton key={index} />)}
         </div>
       </DialogContents>

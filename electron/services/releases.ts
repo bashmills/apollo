@@ -174,6 +174,7 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
         disc: release["media"]?.at(0)?.["position"],
         date: release["date"],
         group: release["release-group"]?.["id"],
+        key: recording["id"],
         id: release["id"],
       });
     }

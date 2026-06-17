@@ -23,6 +23,7 @@ export interface Release {
   disc?: number;
   date?: string;
   group?: string;
+  key?: string;
   id?: string;
 }
 

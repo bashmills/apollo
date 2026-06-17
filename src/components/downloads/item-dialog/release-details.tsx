@@ -41,6 +41,7 @@ export function ReleaseDetails({ onRequestClose, release, item }: Props) {
         <ReleaseDetail label="Disc" value={release?.disc?.toString()} />
         <ReleaseDetail label="Date" value={release?.date} />
         <ReleaseDetail label="Group" value={release?.group} />
+        <ReleaseDetail label="Key" value={release?.key} />
         <ReleaseDetail label="Id" value={release?.id} />
       </DialogContents>
       <div className="w-full flex justify-center items-center">
