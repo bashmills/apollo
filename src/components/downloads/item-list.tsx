@@ -17,22 +17,24 @@ export function ItemList() {
   const items = useAppStore((x) => x.items);
 
   const showGroups = (appStatus === "downloaded" || appStatus === "saving" || appStatus === "saved") && metadataType === "musicbrainz";
-  const groups = showGroups ? items.reduce<Grouping[]>((groups, item) => {
-    const release = item.releases?.at(0);
-    const existing = groups.find((x) => release?.id === x?.id);
-    if (existing) {
-      existing.items.push(item);
-    } else {
-      const id = release?.id;
-      groups.push({
-        release,
-        items: [item],
-        id,
-      });
-    }
+  const groups = showGroups
+    ? items.reduce<Grouping[]>((groups, item) => {
+        const release = item.releases?.at(0);
+        const existing = groups.find((x) => release?.id === x?.id);
+        if (existing) {
+          existing.items.push(item);
+        } else {
+          const id = release?.id;
+          groups.push({
+            release,
+            items: [item],
+            id,
+          });
+        }
 
-    return groups;
-  }, []) : [];
+        return groups;
+      }, [])
+    : [];
 
   const hasGroups = groups.length > 0;
   const hasItems = items.length > 0;

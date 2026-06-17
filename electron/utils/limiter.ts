@@ -53,8 +53,8 @@ export function limiter<T>(url: URL, fn: () => Promise<T>, ms: number): Promise<
   });
 
   const next = result.then(
-    () => { },
-    () => { },
+    () => {},
+    () => {},
   );
 
   QUEUES.set(url.hostname, next);
