@@ -111,7 +111,7 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
   let data: object | null = null;
 
   for (let i = 0; i < searches.length; i++) {
-    const parts = searches[i].filter((x) => x.value !== undefined).map(({ field, value }) => `${field}:${value?.replace('"', "")}`);
+    const parts = searches[i].map(({ field, value }) => (value !== undefined ? `${field}:"${value.replaceAll('"', "")}"` : null)).filter((x) => x !== null);
     const query = parts.join(" AND ");
     if (query.length === 0) {
       log.warn(`${id} - Invalid query for search: ${i}`);
