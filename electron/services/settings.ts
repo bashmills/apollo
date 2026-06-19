@@ -4,16 +4,18 @@ import { safeStorage } from "electron";
 
 export async function loadSettings(): Promise<Settings> {
   const config = await readConfig();
-  const settings = {
+  const settings: Settings = {
     personalAccessToken: decryptToken(config.personalAccessToken),
+    browserType: config.browserType,
   };
 
   return settings;
 }
 
 export async function saveSettings(settings: Settings) {
-  const config = {
+  const config: Settings = {
     personalAccessToken: encryptToken(settings.personalAccessToken),
+    browserType: settings.browserType,
   };
 
   await writeConfig(config);

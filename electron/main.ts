@@ -1,4 +1,4 @@
-import { overrideDownload, searchCustomReleases } from "./services/releases";
+import { searchCustomReleases, overrideDownload } from "./services/releases";
 import { BrowserWindow, ipcMain, protocol, dialog, app } from "electron";
 import { MetadataType, Settings, Metadata, Item } from "../shared/types";
 import { startDownloads, retryDownloads } from "./services/downloader";

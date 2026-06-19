@@ -1,10 +1,12 @@
 export type ItemStatus = "waiting" | "downloading" | "fetching" | "downloaded" | "saving" | "saved" | "missing" | "failed";
 export type AppStatus = "waiting" | "downloading" | "downloaded" | "saving" | "saved";
+export type BrowserType = "firefox" | "chrome" | "safari" | "none";
 export type MetadataType = "musicbrainz" | "youtube";
 export type ImageType = "thumbnail" | "cover-art";
 
 export interface Settings {
   personalAccessToken: string;
+  browserType: BrowserType;
 }
 
 export interface Release {

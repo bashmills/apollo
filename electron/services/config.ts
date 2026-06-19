@@ -1,9 +1,11 @@
+import { BrowserType } from "../../shared/types";
 import { getDataDirectory } from "../utils/os";
 import fs from "fs/promises";
 import path from "path";
 
 export interface Config {
   personalAccessToken: string;
+  browserType: BrowserType;
 }
 
 interface Info {
@@ -11,6 +13,10 @@ interface Info {
 }
 
 const CONFIG_FILENAME = "config.json";
+const DEFAULT_CONFIG: Config = {
+  personalAccessToken: "",
+  browserType: "none",
+};
 
 export async function writeConfig(config: Config) {
   const data = JSON.stringify(config);
@@ -21,11 +27,10 @@ export async function writeConfig(config: Config) {
 export async function readConfig(): Promise<Config> {
   const info = await buildInfo();
   const config = await read(info);
-  if (!config) {
-    return createEmptyConfig();
-  }
-
-  return config;
+  return {
+    ...DEFAULT_CONFIG,
+    ...config,
+  };
 }
 
 async function write({ configPath }: Info, data: string) {
@@ -53,10 +58,4 @@ async function buildInfo(): Promise<Info> {
 
 function getConfigPath(): string {
   return path.join(getDataDirectory(), CONFIG_FILENAME);
-}
-
-function createEmptyConfig(): Config {
-  return {
-    personalAccessToken: "",
-  };
 }

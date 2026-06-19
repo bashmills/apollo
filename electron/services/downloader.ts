@@ -1,9 +1,10 @@
 import { downloadPlaylistThumbnail, convertThumbnail } from "./thumbnail";
+import { MetadataType, Settings, Item } from "../../shared/types";
 import { fetchItemReleases, sortAllReleases } from "./releases";
 import { getCacheDirectory, doesExist } from "../utils/os";
-import { MetadataType, Item } from "../../shared/types";
 import { ToolPaths, getToolPaths } from "./tools";
 import { importItemMetadata } from "./metadata";
+import { loadSettings } from "./settings";
 import sanitize from "sanitize-filename";
 import { AbortError } from "../errors";
 import { spawn } from "child_process";
@@ -63,18 +64,20 @@ export async function startDownloads(options: StartOptions, signal: AbortSignal)
   const { onUpdateItems, onUpdateItem, onShowError, url } = options;
   const info = await buildInfo(options);
   const { downloadType, playlist } = info;
+  const settings = await loadSettings();
   const paths = getToolPaths();
   if (downloadType === "playlist") {
     await downloadPlaylistThumbnail({ playlist, url }, paths, signal);
   }
 
-  const items = await prefetchDownloads(options, info, paths, signal);
+  const items = await prefetchDownloads(options, settings, info, paths, signal);
   await performDownloads(
     {
       onUpdateItems: (newItems: Item[]) => !signal.aborted && onUpdateItems(newItems),
       onUpdateItem: (newItem: Item) => !signal.aborted && onUpdateItem(newItem),
       onShowError: (error: unknown) => !signal.aborted && onShowError(error),
     },
+    settings,
     paths,
     signal,
     items,
@@ -83,6 +86,7 @@ export async function startDownloads(options: StartOptions, signal: AbortSignal)
 
 export async function retryDownloads(options: RetryOptions, signal: AbortSignal) {
   const { onUpdateItems, onUpdateItem, onShowError, items } = options;
+  const settings = await loadSettings();
   const paths = getToolPaths();
   await performDownloads(
     {
@@ -90,16 +94,22 @@ export async function retryDownloads(options: RetryOptions, signal: AbortSignal)
       onUpdateItem: (newItem: Item) => !signal.aborted && onUpdateItem(newItem),
       onShowError: (error: unknown) => !signal.aborted && onShowError(error),
     },
+    settings,
     paths,
     signal,
     items,
   );
 }
 
-async function prefetchDownloads({ onUpdateItems, metadataType, url }: StartOptions, { downloadType, downloadPath }: Info, { ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal): Promise<Item[]> {
+async function prefetchDownloads({ onUpdateItems, metadataType, url }: StartOptions, { browserType }: Settings, { downloadType, downloadPath }: Info, { ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal): Promise<Item[]> {
   return new Promise((resolve, reject) => {
     log.info(`Prefetching downloads: ${url}`);
-    const args = ["--ignore-config", "--abort-on-unavailable-fragments", "--abort-on-error", "--ffmpeg-location", ffmpeg, "--js-runtimes", `deno:${deno}`, "--skip-download", "--flat-playlist", "--dump-json", "--no-progress", url];
+    const args = ["--ignore-config", "--abort-on-unavailable-fragments", "--abort-on-error", "--ffmpeg-location", ffmpeg, "--js-runtimes", `deno:${deno}`, "--skip-download", "--flat-playlist", "--dump-json", "--no-progress"];
+    if (browserType !== "none") {
+      args.push("--cookies-from-browser", browserType);
+    }
+
+    args.push(url);
     const subprocess = spawn(ytdlp, args, { signal });
     const lines: string[] = [];
     let buffer = "";
@@ -184,7 +194,7 @@ async function prefetchDownloads({ onUpdateItems, metadataType, url }: StartOpti
   });
 }
 
-async function performDownloads(callbacks: Callbacks, paths: ToolPaths, signal: AbortSignal, items: Item[]) {
+async function performDownloads(callbacks: Callbacks, settings: Settings, paths: ToolPaths, signal: AbortSignal, items: Item[]) {
   const { onUpdateItems, onUpdateItem, onShowError } = callbacks;
   for (const item of items) {
     try {
@@ -199,18 +209,7 @@ async function performDownloads(callbacks: Callbacks, paths: ToolPaths, signal: 
       item.itemStatus = "downloading";
       onUpdateItem(item);
 
-      const alreadyExists = await doesExist(item.downloadPath);
-      if (!alreadyExists) {
-        await performDownload(paths, signal, item);
-        const exists = await doesExist(item.downloadPath);
-        if (!exists) {
-          throw new Error(`Downloaded file not found: ${item.downloadPath}`);
-        }
-
-        await convertThumbnail(item.thumbnailPath, item.id);
-      } else {
-        log.info(`${item.id} - Skipping download: ${item.downloadPath}`);
-      }
+      await processItemDownload(settings, paths, signal, item);
 
       item.itemStatus = "fetching";
       onUpdateItem(item);
@@ -252,7 +251,23 @@ async function performDownloads(callbacks: Callbacks, paths: ToolPaths, signal: 
   onUpdateItems(items);
 }
 
-async function performDownload({ ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal, item: Item): Promise<void> {
+async function processItemDownload(settings: Settings, paths: ToolPaths, signal: AbortSignal, item: Item) {
+  const alreadyExists = await doesExist(item.downloadPath);
+  if (alreadyExists) {
+    log.info(`${item.id} - Skipping download: ${item.downloadPath}`);
+    return;
+  }
+
+  await performDownload(settings, paths, signal, item);
+  const exists = await doesExist(item.downloadPath);
+  if (!exists) {
+    throw new Error(`Downloaded file not found: ${item.downloadPath}`);
+  }
+
+  await convertThumbnail(item.thumbnailPath, item.id);
+}
+
+async function performDownload({ browserType }: Settings, { ytdlp, ffmpeg, deno }: ToolPaths, signal: AbortSignal, item: Item): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!item.downloadPath) {
       reject(new Error("Invalid filepath to download"));
@@ -265,7 +280,12 @@ async function performDownload({ ytdlp, ffmpeg, deno }: ToolPaths, signal: Abort
     }
 
     log.info(`${item.id} - Starting download: ${item.url}`);
-    const args = ["--ignore-config", "--abort-on-unavailable-fragments", "--abort-on-error", "--ffmpeg-location", ffmpeg, "--js-runtimes", `deno:${deno}`, "--write-thumbnail", "--convert-thumbnails", "jpg", "--output", item.downloadPath, "-t", "mp3", "--embed-metadata", "--no-progress", item.url];
+    const args = ["--ignore-config", "--abort-on-unavailable-fragments", "--abort-on-error", "--ffmpeg-location", ffmpeg, "--js-runtimes", `deno:${deno}`, "--write-thumbnail", "--convert-thumbnails", "jpg", "--output", item.downloadPath, "-t", "mp3", "--embed-metadata", "--no-progress"];
+    if (browserType !== "none") {
+      args.push("--cookies-from-browser", browserType);
+    }
+
+    args.push(item.url);
     const subprocess = spawn(ytdlp, args, { signal });
 
     subprocess.on("close", (code) => {
