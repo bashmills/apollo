@@ -53,7 +53,7 @@ async function saveItem(sourcePath: string, folder: string, item: Item) {
     throw new Error("Invalid filepath to save");
   }
 
-  const track = getTrack(item) ?? item.playlistIndex ?? 1;
+  const track = getTrack(item) ?? item.playlistIndex;
   const performer = sanitize(getPerformer(item));
   const album = sanitize(getAlbum(item));
   const title = sanitize(getTitle(item));
