@@ -1,10 +1,9 @@
 import { ItemRowSkeleton, ItemRow } from "./item-row";
-import { Release, Item } from "../../../shared/types";
 import { useAppStore } from "../../store/app-store";
+import { Item } from "../../../shared/types";
 import { ItemGroup } from "./item-group";
 
 interface Grouping {
-  release?: Release;
   items: Item[];
   id?: string;
 }
@@ -26,7 +25,6 @@ export function ItemList() {
         } else {
           const id = release?.id;
           groups.push({
-            release,
             items: [item],
             id,
           });
@@ -41,7 +39,7 @@ export function ItemList() {
 
   return (
     <div className="space-y-2">
-      {hasItems && hasGroups && groups.map((group, index) => <ItemGroup release={group.release} items={group.items} key={group.id ?? index} />)}
+      {hasItems && hasGroups && groups.map((group, index) => <ItemGroup items={group.items} key={group.id ?? index} />)}
       {hasItems && !hasGroups && items.map((item, index) => <ItemRow item={item} key={item.id ?? index} />)}
       {!hasItems && Array.from({ length: NUM_SKELETONS }).map((_, index) => <ItemRowSkeleton key={index} />)}
     </div>

@@ -1,8 +1,8 @@
-import { Release, Item } from "../../../shared/types";
-import { Dialog } from "../ui/dialog";
+import { Release, Item } from "../../../../shared/types";
+import { GroupDetails } from "./contents/group-details";
+import { GroupList } from "./contents/group-list";
+import { Dialog } from "../../ui/dialog";
 import { useState } from "react";
-import { GroupList } from "./group-dialog/group-list";
-import { GroupDetails } from "./group-dialog/group-details";
 
 type View = "groups" | "detail";
 

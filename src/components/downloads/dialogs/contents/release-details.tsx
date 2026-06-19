@@ -1,9 +1,10 @@
-import { DialogContainer } from "../../ui/dialog-container";
-import { DialogContents } from "../../ui/dialog-contents";
-import { ReleaseDetail } from "./contents/release-detail";
-import { useHandlers } from "../../../hooks/use-handlers";
-import { Release, Item } from "../../../../shared/types";
-import { Button } from "../../ui/button";
+import { DialogContainer } from "../../../ui/dialog-container";
+import { DialogContents } from "../../../ui/dialog-contents";
+import { useHandlers } from "../../../../hooks/use-handlers";
+import { Release, Item } from "../../../../../shared/types";
+import { useAppStore } from "../../../../store/app-store";
+import { ReleaseDetail } from "./release-detail";
+import { Button } from "../../../ui/button";
 
 interface Props {
   onRequestClose: () => void;
@@ -12,7 +13,10 @@ interface Props {
 }
 
 export function ReleaseDetails({ onRequestClose, release, item }: Props) {
+  const appStatus = useAppStore((x) => x.appStatus);
   const { handleSelectRelease } = useHandlers();
+
+  const disabled = (item.itemStatus !== "downloaded" && item.itemStatus !== "missing") || appStatus !== "downloaded";
 
   const handleSelect = () => {
     if (!release) {
@@ -45,7 +49,7 @@ export function ReleaseDetails({ onRequestClose, release, item }: Props) {
         <ReleaseDetail label="Id" value={release?.id} />
       </DialogContents>
       <div className="w-full flex justify-center items-center">
-        <Button onClick={handleSelect} variant="primary" size="medium" type="button">
+        <Button onClick={handleSelect} disabled={disabled} variant="primary" size="medium" type="button">
           Select Release
         </Button>
       </div>

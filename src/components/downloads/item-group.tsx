@@ -1,29 +1,32 @@
-import { getReleasePerformer, getReleaseAlbum } from "../../../shared/utils";
-import { ImageType, Release, Item } from "../../../shared/types";
+import { getReleasePerformer, getReleaseAlbum, getUniqueKey } from "../../../shared/utils";
+import { ImageType, Item } from "../../../shared/types";
 import { MouseEvent, useEffect, useState } from "react";
 import { DetailedButton } from "../ui/detailed-button";
 import { useHandlers } from "../../hooks/use-handlers";
+import { GroupDialog } from "./dialogs/group-dialog";
 import { useAppStore } from "../../store/app-store";
 import { ImageSwitch } from "../ui/image-switch";
 import { IconButton } from "../ui/icon-button";
-import { GroupDialog } from "./group-dialog";
 import { ItemRow } from "./item-row";
 
 interface Props {
-  release?: Release;
   items: Item[];
 }
 
-export function ItemGroup({ release, items }: Props) {
+export function ItemGroup({ items }: Props) {
   const [imageType, setImageType] = useState<ImageType>("cover-art");
   const appStatus = useAppStore((x) => x.appStatus);
   const { handleApplyImageTypes } = useHandlers();
   const [expanded, setExpanded] = useState(true);
   const [open, setOpen] = useState(false);
 
-  const variant = release ? (!hasDuplicates(items) ? (release.total === items.length ? "success" : "warning") : "error") : "pending";
-  const matches = release?.total ? `${items.length} / ${release.total}` : items.length;
+  const release = items.at(0)?.releases?.at(0);
+  const total = getTotalTracks(items);
+  const count = items.length;
+
+  const variant = release ? (!hasDuplicates(items) ? (total === count ? "success" : "warning") : "error") : "pending";
   const canOpen = appStatus === "downloading" || appStatus === "downloaded";
+  const matches = total ? `${count} / ${total}` : count;
   const thumbnail = items.at(0)?.playlistId;
   const coverArt = release?.group;
 
@@ -99,20 +102,40 @@ export function ItemGroup({ release, items }: Props) {
   );
 }
 
-function hasDuplicates(items: Item[]): boolean {
-  const seen = new Set<string>();
+function getTotalTracks(items: Item[]): number {
+  const seen = new Set<number>();
+  let result = 0;
   for (const item of items) {
-    const release = item.releases?.[0];
-    if (!release?.key || !release?.id) {
+    const total = item.releases?.at(0)?.total;
+    const disc = item.releases?.at(0)?.disc;
+    if (total === undefined || disc === undefined) {
       continue;
     }
 
-    const id = `${release.key}:${release.id}`;
-    if (seen.has(id)) {
+    if (seen.has(disc)) {
+      continue;
+    }
+
+    result += total;
+    seen.add(disc);
+  }
+
+  return result;
+}
+
+function hasDuplicates(items: Item[]): boolean {
+  const seen = new Set<string>();
+  for (const item of items) {
+    const key = getUniqueKey(item.releases?.at(0));
+    if (key === null) {
+      continue;
+    }
+
+    if (seen.has(key)) {
       return true;
     }
 
-    seen.add(id);
+    seen.add(key);
   }
 
   return false;

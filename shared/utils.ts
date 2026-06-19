@@ -26,8 +26,8 @@ export function getMetadataDisc(): number | undefined {
   return undefined;
 }
 
-export function getMetadataDate(item: Item): string | undefined {
-  return item?.metadata?.date;
+export function getMetadataDate(): string | undefined {
+  return new Date().toISOString().slice(0, 10);
 }
 
 // Release
@@ -121,6 +121,17 @@ export function getDate(item: Item): string | undefined {
     case "musicbrainz":
       return getReleaseDate(item.releases?.at(0));
     case "youtube":
-      return getMetadataDate(item);
+      return getMetadataDate();
   }
+}
+
+// Misc
+
+export function getUniqueKey(release?: Release): string | null {
+  if (!release?.key || !release?.id) {
+    return null;
+  }
+
+  const key = `${release.key}:${release.id}`;
+  return key;
 }

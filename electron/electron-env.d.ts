@@ -6,7 +6,7 @@ interface Window {
     onUpdateItem: (callback: (newItem: Item) => void) => () => void;
     onShowError: (callback: (error: Error) => void) => () => void;
 
-    searchCustomReleases: (metadata: Metadata, item: Item) => Promise<Release[]>;
+    searchCustomReleases: (metadata: Metadata, item: Item) => Promise<string[]>;
     requestThumbnail: (id: string) => Promise<string | null>;
     requestCoverArt: (id: string) => Promise<string | null>;
 

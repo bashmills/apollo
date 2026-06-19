@@ -1,9 +1,10 @@
-import { DialogContainer } from "../../ui/dialog-container";
-import { DialogContents } from "../../ui/dialog-contents";
-import { useHandlers } from "../../../hooks/use-handlers";
-import { Release, Item } from "../../../../shared/types";
-import { GroupDetail } from "./contents/group-detail";
-import { Button } from "../../ui/button";
+import { DialogContainer } from "../../../ui/dialog-container";
+import { DialogContents } from "../../../ui/dialog-contents";
+import { useHandlers } from "../../../../hooks/use-handlers";
+import { Release, Item } from "../../../../../shared/types";
+import { useAppStore } from "../../../../store/app-store";
+import { GroupDetail } from "./group-detail";
+import { Button } from "../../../ui/button";
 
 interface Props {
   onClose: () => void;
@@ -12,7 +13,10 @@ interface Props {
 }
 
 export function GroupDetails({ onClose, release, items }: Props) {
+  const appStatus = useAppStore((x) => x.appStatus);
   const { handleSelectReleases } = useHandlers();
+
+  const disabled = appStatus !== "downloaded";
 
   const handleSelect = () => {
     if (!release) {
@@ -39,7 +43,7 @@ export function GroupDetails({ onClose, release, items }: Props) {
         <GroupDetail label="Id" value={release?.id} />
       </DialogContents>
       <div className="w-full flex justify-center items-center">
-        <Button onClick={handleSelect} variant="primary" size="medium" type="button">
+        <Button onClick={handleSelect} disabled={disabled} variant="primary" size="medium" type="button">
           Select Release
         </Button>
       </div>

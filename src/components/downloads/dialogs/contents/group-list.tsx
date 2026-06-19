@@ -1,9 +1,9 @@
-import { GroupRowSkeleton, GroupRow } from "./contents/group-row";
-import { DialogContainer } from "../../ui/dialog-container";
-import { DialogContents } from "../../ui/dialog-contents";
-import { Release, Item } from "../../../../shared/types";
-import { Button } from "../../ui/button";
-import { Icon } from "../../ui/icon";
+import { DialogContainer } from "../../../ui/dialog-container";
+import { DialogContents } from "../../../ui/dialog-contents";
+import { Release, Item } from "../../../../../shared/types";
+import { GroupRowSkeleton, GroupRow } from "./group-row";
+import { Button } from "../../../ui/button";
+import { Icon } from "../../../ui/icon";
 
 interface Props {
   onSelect: (release: Release) => void;
@@ -30,8 +30,8 @@ export function GroupList({ onSelect, onClose, items }: Props) {
   return (
     <DialogContainer>
       <DialogContents>
+        {!isLoading && hasReleases && releases?.map((release, index) => <GroupRow onSelect={() => onSelect(release)} release={release} key={release.id ?? index} />)}
         {isLoading && Array.from({ length: NUM_SKELETONS }).map((_, index) => <GroupRowSkeleton key={index} />)}
-        {!isLoading && hasReleases && releases?.map((release, index) => <GroupRow onSelect={() => onSelect(release)} release={release} items={items} key={release.id ?? index} />)}
         {!isLoading && !hasReleases && (
           <div className="flex justify-center items-center min-h-64">
             <Icon className="size-5" icon="error">

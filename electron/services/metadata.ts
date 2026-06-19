@@ -1,6 +1,5 @@
 import { getPerformer, getArtist, getAlbum, getTitle, getTrack, getDisc, getDate } from "../../shared/utils";
 import { Promise as ID3, TagConstants } from "node-id3";
-import { sanitizeDate } from "../../shared/conversion";
 import { getThumbnailPath } from "./thumbnail";
 import { getCoverArtPath } from "./cover-art";
 import { Item } from "../../shared/types";
@@ -33,6 +32,7 @@ export async function exportItemMetadata(filepath: string, item: Item) {
     : undefined;
   const year = getDate(item)?.slice(0, 4);
 
+  await ID3.removeTags(filepath);
   await ID3.write(
     {
       performerInfo: getPerformer(item),
@@ -59,15 +59,12 @@ export async function importItemMetadata(signal: AbortSignal, item: Item) {
 
   log.info(`${item.id} - Importing metadata: ${item.downloadPath}`);
   const tags = await ID3.read(item.downloadPath);
-  const time = tags.originalReleaseTime ?? tags.releaseTime ?? tags.recordingTime ?? "";
-  const date = sanitizeDate(time);
 
   item.metadata = {
     performer: tags.performerInfo,
     artist: tags.artist,
     album: tags.album,
     title: tags.title,
-    date,
   };
 }
 

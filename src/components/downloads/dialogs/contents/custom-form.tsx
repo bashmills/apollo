@@ -1,10 +1,11 @@
-import { sanitizeDate, sanitizeInt, convertInt } from "../../../../shared/conversion";
-import { DialogContainer } from "../../ui/dialog-container";
-import { DialogContents } from "../../ui/dialog-contents";
-import { useHandlers } from "../../../hooks/use-handlers";
-import { Item, Release } from "../../../../shared/types";
-import { TextField } from "../../ui/text-field";
-import { Button } from "../../ui/button";
+import { sanitizeDate, sanitizeInt, convertInt } from "../../../../../shared/conversion";
+import { DialogContainer } from "../../../ui/dialog-container";
+import { DialogContents } from "../../../ui/dialog-contents";
+import { useHandlers } from "../../../../hooks/use-handlers";
+import { Item, Release } from "../../../../../shared/types";
+import { useAppStore } from "../../../../store/app-store";
+import { TextField } from "../../../ui/text-field";
+import { Button } from "../../../ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,7 +27,9 @@ export function CustomForm({ onRequestClose, onSearch, item }: Props) {
   const [date, setDate] = useState(item.custom?.date ?? "");
   const [errors, setErrors] = useState<Map<InputError, string>>(new Map());
   const { handleSelectRelease, handleCustomRelease } = useHandlers();
+  const appStatus = useAppStore((x) => x.appStatus);
 
+  const disabled = (item.itemStatus !== "downloaded" && item.itemStatus !== "missing") || appStatus !== "downloaded";
   const release: Release = {
     performer,
     artist,
@@ -126,10 +129,10 @@ export function CustomForm({ onRequestClose, onSearch, item }: Props) {
           </TextField>
         </DialogContents>
         <div className="w-full flex flex-col justify-center items-center space-y-2">
-          <Button onClick={handleSearch} variant="primary" size="medium" type="button">
+          <Button onClick={handleSearch} disabled={disabled} variant="primary" size="medium" type="button">
             Search Cover Art
           </Button>
-          <Button onClick={handleApply} variant="primary" size="medium" type="button">
+          <Button onClick={handleApply} disabled={disabled} variant="primary" size="medium" type="button">
             Add Release
           </Button>
         </div>

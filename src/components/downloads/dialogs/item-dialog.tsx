@@ -1,10 +1,10 @@
-import { ReleaseDetails } from "./item-dialog/release-details";
-import { MetadataForm } from "./item-dialog/metadata-form";
-import { ReleaseList } from "./item-dialog/release-list";
-import { CustomForm } from "./item-dialog/custom-form";
-import { SearchList } from "./item-dialog/search-list";
-import { Release, Item } from "../../../shared/types";
-import { Dialog } from "../ui/dialog";
+import { ReleaseDetails } from "./contents/release-details";
+import { Release, Item } from "../../../../shared/types";
+import { MetadataForm } from "./contents/metadata-form";
+import { ReleaseList } from "./contents/release-list";
+import { CustomForm } from "./contents/custom-form";
+import { SearchList } from "./contents/search-list";
+import { Dialog } from "../../ui/dialog";
 import { useState } from "react";
 
 type View = "releases" | "detail" | "metadata" | "custom" | "search";
@@ -15,8 +15,8 @@ interface Props {
 }
 
 export function ItemDialog({ onClose, item }: Props) {
+  const [view, setView] = useState<View>(item.metadataType === "youtube" ? "metadata" : "releases");
   const [selected, setSelected] = useState<Release>();
-  const [view, setView] = useState<View>("releases");
   const [visible, setVisible] = useState(false);
 
   const handleSearchRelease = (release: Release) => {
@@ -34,6 +34,11 @@ export function ItemDialog({ onClose, item }: Props) {
   };
 
   const handleBack = () => {
+    if (item.metadataType === "youtube") {
+      setVisible(false);
+      return;
+    }
+
     if (view === "search") {
       setView("custom");
       return;

@@ -4,8 +4,8 @@ import { ItemStatus, Item } from "../../../shared/types";
 import { MouseEvent, useEffect, useState } from "react";
 import { useHandlers } from "../../hooks/use-handlers";
 import { useAppStore } from "../../store/app-store";
+import { ItemDialog } from "./dialogs/item-dialog";
 import { ImageSwitch } from "../ui/image-switch";
-import { ItemDialog } from "./item-dialog";
 import { ItemBadge } from "./item-badge";
 
 interface Props {
@@ -29,7 +29,7 @@ export function ItemRow({ item }: Props) {
   const { handleToggleImageType } = useHandlers();
   const [open, setOpen] = useState(false);
 
-  const canOpen = (appStatus === "downloading" || appStatus === "downloaded") && metadataType === "musicbrainz";
+  const canOpen = appStatus === "downloading" || appStatus === "downloaded";
   const variant = DETAILED_BUTTON_VARIANTS.get(item.itemStatus) ?? "pending";
   const release = item.releases?.at(0);
   const group = release?.group;

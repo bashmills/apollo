@@ -1,17 +1,14 @@
 import { getReleasePerformer, getReleaseAlbum } from "../../../../../shared/utils";
 import { DetailedButton } from "../../../ui/detailed-button";
-import { Release, Item } from "../../../../../shared/types";
+import { Release } from "../../../../../shared/types";
 import { CoverArt } from "../../../ui/cover-art";
 
 interface Props {
   onSelect: () => void;
   release: Release;
-  items: Item[];
 }
 
-export function GroupRow({ onSelect, release, items }: Props) {
-  const matches = release?.total ? `${items.length} / ${release.total}` : items.length;
-
+export function GroupRow({ onSelect, release }: Props) {
   return (
     <DetailedButton onClick={onSelect} variant="pending">
       <div className="flex items-center gap-x-3">
@@ -21,7 +18,6 @@ export function GroupRow({ onSelect, release, items }: Props) {
         <div className="flex-1 min-w-0 text-left">
           <p className="font-medium text-gray-200 truncate">{getReleaseAlbum(release)}</p>
           <p className="text-sm text-gray-400 truncate">{getReleasePerformer(release)}</p>
-          <p className="text-sm text-gray-400 truncate">{matches}</p>
         </div>
       </div>
     </DetailedButton>
@@ -38,7 +34,6 @@ export function GroupRowSkeleton() {
         <div className="flex-1 space-y-1">
           <div className="h-4 w-4/6 rounded bg-gray-500/60 animate-pulse"></div>
           <div className="h-4 w-2/6 rounded bg-gray-500/50 animate-pulse"></div>
-          <div className="h-4 w-1/6 rounded bg-gray-500/40 animate-pulse"></div>
         </div>
       </div>
     </div>

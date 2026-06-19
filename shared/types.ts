@@ -34,7 +34,6 @@ export interface Metadata {
   artist?: string;
   album?: string;
   title?: string;
-  date?: string;
 }
 
 export interface Item {

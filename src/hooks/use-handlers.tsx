@@ -7,7 +7,7 @@ import log from "electron-log/renderer";
 const DELAY = 500;
 
 export function useHandlers() {
-  const { applyImageTypes, toggleImageType, updateReleases, updateRelease, updateCustom, updateAppStatus, setAppStatus, reset } = useAppStore.getState();
+  const { applyImageTypes, toggleImageType, updateReleases, updateRelease, updateMetadata, updateCustom, updateAppStatus, setAppStatus, reset } = useAppStore.getState();
 
   return {
     // Apply image types handler
@@ -40,25 +40,30 @@ export function useHandlers() {
     // Override metadata handler
     handleOverrideMetadata: async (metadata: Metadata, item: Item) => {
       log.info("Handling override metadata...");
-      const { appStatus, items } = useAppStore.getState();
+      const { metadataType, appStatus, items } = useAppStore.getState();
       if (appStatus !== "downloaded") {
         log.error(`Incorrect status for override metadata: ${appStatus}`);
         return;
       }
 
-      const newItem = { ...item, releases: [], metadata, itemStatus: "fetching" as ItemStatus };
-      const newItems = items.map((x) => (newItem.id === x.id ? newItem : x));
-      updateAppStatus("downloading", newItems);
+      if (metadataType === "musicbrainz") {
+        const newItem = { ...item, releases: [], metadata, itemStatus: "fetching" as ItemStatus };
+        const newItems = items.map((x) => (newItem.id === x.id ? newItem : x));
+        updateAppStatus("downloading", newItems);
 
-      const success = await invokeWithSleep(() => window.backend?.overrideDownload(newItems, newItem), DELAY);
-      if (!success) {
-        log.info("Handle override metadata failed");
-        reset();
-        return;
+        const success = await invokeWithSleep(() => window.backend?.overrideDownload(newItems, newItem), DELAY);
+        if (!success) {
+          log.info("Handle override metadata failed");
+          reset();
+          return;
+        }
+
+        setAppStatus("downloaded");
+      } else {
+        updateMetadata(metadata, item.id);
       }
 
       toast.success("Override complete");
-      setAppStatus("downloaded");
       log.info("Handle override metadata success");
     },
 

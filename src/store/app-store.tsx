@@ -1,4 +1,4 @@
-import { MetadataType, AppStatus, ItemStatus, ImageType, Release, Item } from "../../shared/types";
+import { MetadataType, AppStatus, ItemStatus, ImageType, Metadata, Release, Item } from "../../shared/types";
 import { create } from "zustand";
 
 interface AppState {
@@ -8,6 +8,7 @@ interface AppState {
   updateReleases: (itemIds: Set<string | undefined>, releaseId?: string) => void;
   updateRelease: (release: Release, itemId?: string) => void;
 
+  updateMetadata: (metadata: Metadata, itemId?: string) => void;
   updateCustom: (custom: Release, itemId?: string) => void;
   updateItem: (item: Item) => void;
 
@@ -68,6 +69,18 @@ export const useAppStore = create<AppState>((set) => ({
               ...item,
               releases: [release, ...(item.releases ?? []).filter((x) => release.id !== x.id)],
               itemStatus: "downloaded" as ItemStatus,
+            }
+          : item,
+      ),
+    })),
+
+  updateMetadata: (metadata: Metadata, itemId?: string) =>
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              metadata,
             }
           : item,
       ),

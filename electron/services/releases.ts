@@ -34,11 +34,12 @@ const TOTAL_THRESHOLD = 4;
 const COUNT_THRESHOLD = 4;
 const DELAY = 1000;
 
-export async function searchCustomReleases(options: CustomOptions, signal: AbortSignal): Promise<Release[]> {
+export async function searchCustomReleases(options: CustomOptions, signal: AbortSignal): Promise<string[]> {
   const { metadata, item } = options;
   const { id } = item;
   const releases = await fetchReleases({ metadata, id }, signal);
-  return releases;
+  const ids = releases.map((x) => x.id).filter((x) => x !== undefined);
+  return ids;
 }
 
 export async function overrideDownload(options: OverrideOptions, signal: AbortSignal) {
