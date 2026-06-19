@@ -1,4 +1,4 @@
-import { Release, Item, Metadata } from "../../shared/types";
+import { Metadata, Release, Item } from "../../shared/types";
 import { limiter } from "../utils/limiter";
 import log from "electron-log/main";
 import { app } from "electron";
@@ -26,8 +26,18 @@ interface Search {
   value?: string;
 }
 
+interface Entry {
+  close: string;
+  index: number;
+}
+
 const MUSICBRAINZ_URL = "https://musicbrainz.org/ws/2/recording";
 const USER_AGENT = `Apollo/${app.getVersion()} ( bashmills@proton.me )`;
+const BRACKETS = new Map<string, string>([
+  ["(", ")"],
+  ["[", "]"],
+  ["{", "}"],
+]);
 const MAPPING_THRESHOLD = 0.005;
 const SCORE_THRESHOLD = 50;
 const TOTAL_THRESHOLD = 4;
@@ -91,27 +101,50 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
     return value !== undefined ? value + 1 : undefined;
   };
 
+  const recording = metadata?.title ?? title;
+  const cleaned = cleanString(recording);
+  const release = metadata?.album;
+  const artist = metadata?.artist;
+
   const searches: Search[][] = [
     [
-      { value: metadata?.title, field: "recording" },
-      { value: metadata?.album, field: "release" },
-      { value: metadata?.artist, field: "artist" },
+      { value: recording, field: "recording" },
+      { value: release, field: "release" },
+      { value: artist, field: "artist" },
     ],
     [
-      { value: metadata?.title, field: "recording" },
-      { value: metadata?.artist, field: "artist" },
+      { value: recording, field: "recording" },
+      { value: artist, field: "artist" },
     ],
     [
-      { value: metadata?.title, field: "recording" },
-      { value: metadata?.album, field: "release" },
+      { value: recording, field: "recording" },
+      { value: release, field: "release" },
     ],
-    [{ value: metadata?.title, field: "recording" }],
-    [{ value: title, field: "recording" }],
+    [{ value: recording, field: "recording" }],
+    [
+      { value: cleaned, field: "recording" },
+      { value: release, field: "release" },
+      { value: artist, field: "artist" },
+    ],
+    [
+      { value: cleaned, field: "recording" },
+      { value: artist, field: "artist" },
+    ],
+    [
+      { value: cleaned, field: "recording" },
+      { value: release, field: "release" },
+    ],
+    [{ value: cleaned, field: "recording" }],
   ];
 
   let data: object | null = null;
 
   for (let i = 0; i < searches.length; i++) {
+    if (searches[i].some((x) => x.value === undefined)) {
+      log.info(`${id} - Skipping ${i} search as not all values are valid`);
+      continue;
+    }
+
     const parts = searches[i].map(({ field, value }) => (value !== undefined ? `${field}:"${value.replaceAll('"', "")}"` : null)).filter((x) => x !== null);
     const query = parts.join(" AND ");
     if (query.length === 0) {
@@ -261,12 +294,11 @@ function sortReleases(mapping: Map<string, number> | null, item: Item) {
     return 0;
   };
 
-  item.releases = item.releases?.sort((a, b) => {
-    const score = (b.score ?? 0) - (a.score ?? 0);
-    if (Math.abs(score) >= SCORE_THRESHOLD) {
-      return score;
-    }
+  const scoreFunc = (a: Release, b: Release): number => {
+    return (b.score ?? 0) - (a.score ?? 0);
+  };
 
+  item.releases = item.releases?.sort((a, b) => {
     let result = matchFunc((x) => x.status, a, b, "Official");
     if (result !== 0) {
       return result;
@@ -285,6 +317,11 @@ function sortReleases(mapping: Map<string, number> | null, item: Item) {
     result = mappingFunc(a, b);
     if (Math.abs(result) >= MAPPING_THRESHOLD) {
       return result;
+    }
+
+    const score = scoreFunc(a, b);
+    if (Math.abs(score) >= SCORE_THRESHOLD) {
+      return score;
     }
 
     result = notContainsFunc((x) => x.secondaryTypes, a, b, "Compilation");
@@ -363,4 +400,47 @@ function buildReleaseMapping(items: Item[]): Map<string, number> {
   }
 
   return mapping;
+}
+
+function parseBrackets(value: string): string[] {
+  const results: string[] = [];
+  const entries: Entry[] = [];
+  for (let index = 0; index < value.length; index++) {
+    const char = value[index];
+    const close = BRACKETS.get(char);
+    if (close) {
+      entries.push({ close, index });
+      continue;
+    }
+
+    const entry = entries[entries.length - 1];
+    if (!entry) {
+      continue;
+    }
+
+    if (entry.close !== char) {
+      continue;
+    }
+
+    const result = value.slice(entry.index, index + 1);
+    results.push(result);
+    entries.pop();
+  }
+
+  return results;
+}
+
+function cleanString(value?: string): string | undefined {
+  if (value === undefined) {
+    return value;
+  }
+
+  const brackets = parseBrackets(value).sort((a, b) => b.length - a.length);
+  for (const bracket of brackets) {
+    value = value.split(bracket).join("");
+  }
+
+  value = value.replaceAll("  ", " ");
+  value = value.trim();
+  return value;
 }
