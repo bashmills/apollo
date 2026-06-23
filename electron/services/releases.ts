@@ -33,6 +33,7 @@ interface Entry {
 
 const MUSICBRAINZ_URL = "https://musicbrainz.org/ws/2/recording";
 const USER_AGENT = `Apollo/${app.getVersion()} ( bashmills@proton.me )`;
+const REMOVE_CHARACTERS = ['"', "&", "?"];
 const BRACKETS = new Map<string, string>([
   ["(", ")"],
   ["[", "]"],
@@ -102,25 +103,11 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
   };
 
   const recording = metadata?.title ?? title;
-  const cleaned = cleanString(recording);
+  const cleaned = cleanBrackets(recording);
   const release = metadata?.album;
   const artist = metadata?.artist;
 
   const searches: Search[][] = [
-    [
-      { value: recording, field: "recording" },
-      { value: release, field: "release" },
-      { value: artist, field: "artist" },
-    ],
-    [
-      { value: recording, field: "recording" },
-      { value: artist, field: "artist" },
-    ],
-    [
-      { value: recording, field: "recording" },
-      { value: release, field: "release" },
-    ],
-    [{ value: recording, field: "recording" }],
     [
       { value: cleaned, field: "recording" },
       { value: release, field: "release" },
@@ -145,7 +132,7 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
       continue;
     }
 
-    const parts = searches[i].map(({ field, value }) => (value !== undefined ? `${field}:"${value.replaceAll('"', "")}"` : null)).filter((x) => x !== null);
+    const parts = searches[i].map(({ field, value }) => (value !== undefined ? `${field}:${cleanValue(value)}` : null)).filter((x) => x !== null);
     const query = parts.join(" AND ");
     if (query.length === 0) {
       log.warn(`${id} - Invalid query for search: ${i}`);
@@ -402,6 +389,25 @@ function buildReleaseMapping(items: Item[]): Map<string, number> {
   return mapping;
 }
 
+function cleanValue(value: string): string {
+  return REMOVE_CHARACTERS.reduce((v, c) => v.split(c).join(""), value);
+}
+
+function cleanBrackets(value?: string): string | undefined {
+  if (value === undefined) {
+    return value;
+  }
+
+  const brackets = parseBrackets(value);
+  for (const bracket of brackets) {
+    value = value.split(bracket).join("");
+  }
+
+  value = value.replaceAll("  ", " ");
+  value = value.trim();
+  return value;
+}
+
 function parseBrackets(value: string): string[] {
   const results: string[] = [];
   const entries: Entry[] = [];
@@ -427,20 +433,6 @@ function parseBrackets(value: string): string[] {
     entries.pop();
   }
 
-  return results;
-}
-
-function cleanString(value?: string): string | undefined {
-  if (value === undefined) {
-    return value;
-  }
-
-  const brackets = parseBrackets(value).sort((a, b) => b.length - a.length);
-  for (const bracket of brackets) {
-    value = value.split(bracket).join("");
-  }
-
-  value = value.replaceAll("  ", " ");
-  value = value.trim();
-  return value;
+  const sorted = results.sort((a, b) => b.length - a.length);
+  return sorted;
 }
