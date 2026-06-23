@@ -221,8 +221,8 @@ function sortReleases(mapping: Map<string, number> | null, item: Item) {
         return 0;
       }
 
-      const confidence = count !== total ? Math.sqrt(count) : count;
-      const accuracy = count / total;
+      const confidence = Math.sqrt(Math.min(total, count));
+      const accuracy = total > count ? count / total : total / count;
       return confidence * accuracy;
     };
 
