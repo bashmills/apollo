@@ -3,15 +3,15 @@ import { Release, Item } from "./types";
 // Metadata
 
 export function getMetadataPerformer(item: Item): string {
-  return item.playlistChannel ?? item.metadata?.performer ?? item.metadata?.artist ?? "Unknown Album Artist";
+  return item.metadata?.performer ?? item.metadata?.artist ?? item.playlistChannel ?? "Unknown Album Artist";
 }
 
 export function getMetadataArtist(item: Item): string {
-  return item.channel ?? item.metadata?.artist ?? "Unknown Artist";
+  return item.metadata?.artist ?? item.channel ?? "Unknown Artist";
 }
 
 export function getMetadataAlbum(item: Item): string {
-  return item.playlistTitle ?? item.metadata?.album ?? "Unknown Album";
+  return item.metadata?.album ?? item.playlistTitle ?? "Unknown Album";
 }
 
 export function getMetadataTitle(item: Item): string {
