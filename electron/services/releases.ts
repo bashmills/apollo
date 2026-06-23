@@ -109,6 +109,19 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
 
   const searches: Search[][] = [
     [
+      { value: recording, field: "recording" },
+      { value: release, field: "release" },
+      { value: artist, field: "artist" },
+    ],
+    [
+      { value: recording, field: "recording" },
+      { value: artist, field: "artist" },
+    ],
+    [
+      { value: recording, field: "recording" },
+      { value: release, field: "release" },
+    ],
+    [
       { value: cleaned, field: "recording" },
       { value: release, field: "release" },
       { value: artist, field: "artist" },
@@ -121,6 +134,7 @@ async function fetchReleases({ metadata, title, id }: MetadataOptions, signal: A
       { value: cleaned, field: "recording" },
       { value: release, field: "release" },
     ],
+    [{ value: recording, field: "recording" }],
     [{ value: cleaned, field: "recording" }],
   ];
 
