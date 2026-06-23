@@ -10,7 +10,7 @@ async function sleep(ms: number) {
 }
 
 async function retry<T>(fn: () => Promise<T>, ms: number): Promise<T> {
-  let last: unknown = null;
+  let last: Error | null = null;
   for (let attempt = 0; attempt <= RETRIES; attempt++) {
     try {
       return await fn();
@@ -27,8 +27,10 @@ async function retry<T>(fn: () => Promise<T>, ms: number): Promise<T> {
         throw error;
       }
 
-      log.warn(error);
-      last = error;
+      if (error instanceof Error) {
+        log.warn(error);
+        last = error;
+      }
     }
 
     await sleep(ms);
