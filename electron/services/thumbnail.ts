@@ -35,7 +35,7 @@ interface Info {
 
 const CACHED_FILENAMES = new Map<string, string | null>();
 const FOLDER_NAME = "thumbnail";
-const DELAY = 1000;
+const DELAY = 1200;
 
 export async function downloadPlaylistThumbnail(options: Options, paths: ToolPaths, signal: AbortSignal) {
   const info = await buildInfo(options.playlist);

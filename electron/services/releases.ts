@@ -43,7 +43,7 @@ const MAPPING_THRESHOLD = 0.005;
 const SCORE_THRESHOLD = 50;
 const TOTAL_THRESHOLD = 4;
 const COUNT_THRESHOLD = 4;
-const DELAY = 1000;
+const DELAY = 1200;
 
 export async function searchCustomReleases(options: CustomOptions, signal: AbortSignal): Promise<string[]> {
   const { metadata, item } = options;

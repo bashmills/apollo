@@ -92,7 +92,7 @@ const TOOLS = new Map<ToolName, Tool>([
 const GITHUB_API_URL = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest";
 const USER_AGENT = `Apollo/${app.getVersion()} ( bashmills@proton.me )`;
 const CHECK_THRESHOLD = 1000 * 60 * 60;
-const DELAY = 1000;
+const DELAY = 1200;
 
 export async function checkLatestVersion(signal: AbortSignal) {
   const settings = await loadSettings();

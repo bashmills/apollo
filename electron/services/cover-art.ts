@@ -13,7 +13,7 @@ interface Info {
 const CACHED_REQUESTS = new Map<string, Promise<string | null>>();
 const CACHED_FILENAMES = new Map<string, string | null>();
 const FOLDER_NAME = "cover-art";
-const DELAY = 100;
+const DELAY = 200;
 
 export async function fetchCoverArt(id: string): Promise<string | null> {
   const filename = CACHED_FILENAMES.get(id);

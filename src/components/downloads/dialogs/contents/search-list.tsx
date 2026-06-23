@@ -15,7 +15,7 @@ interface Props {
 }
 
 const NUM_SKELETONS = 15;
-const DELAY = 500;
+const DELAY = 200;
 
 export function SearchList({ onRequestClose, release, item }: Props) {
   const appStatus = useAppStore((x) => x.appStatus);

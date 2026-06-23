@@ -4,7 +4,7 @@ import { useAppStore } from "../store/app-store";
 import { toast } from "sonner";
 import log from "electron-log/renderer";
 
-const DELAY = 500;
+const DELAY = 200;
 
 export function useHandlers() {
   const { applyImageTypes, toggleImageType, updateReleases, updateRelease, updateMetadata, updateCustom, updateAppStatus, setAppStatus, reset } = useAppStore.getState();
