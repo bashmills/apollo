@@ -7,11 +7,12 @@ interface Props {
   onClose: () => void;
   onBack?: () => void;
   visible: boolean;
+  expand?: boolean;
   title?: string;
   children: ReactNode;
 }
 
-export function Dialog({ onSetVisible, onClose, onBack, visible, title, children }: Props) {
+export function Dialog({ onSetVisible, onClose, onBack, visible, expand, title, children }: Props) {
   const pointerDownOnBackdrop = useRef(false);
 
   const handleTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
@@ -83,7 +84,11 @@ export function Dialog({ onSetVisible, onClose, onBack, visible, title, children
       onPointerDown={(x) => handlePointerDown(x)}
       onPointerUp={(x) => handlePointerUp(x)}
     >
-      <div className={`w-full flex flex-col max-h-3/4 max-w-3xl rounded-2xl p-6 space-y-6 border border-gray-700/50 bg-gray-800/80 shadow-2xl transform transition-transform duration-200 ${visible ? "scale-100" : "scale-0"}`} onPointerDown={(x) => x.stopPropagation()} onPointerUp={(x) => x.stopPropagation()}>
+      <div
+        className={`w-full flex flex-col ${!expand ? "max-h-3/4" : "h-3/4"} max-w-3xl rounded-2xl p-6 space-y-6 border border-gray-700/50 bg-gray-800/80 shadow-2xl transform transition-transform duration-200 ${visible ? "scale-100" : "scale-0"}`}
+        onPointerDown={(x) => x.stopPropagation()}
+        onPointerUp={(x) => x.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
           <IconButton onClick={handleBack} icon="back" />
           {title && (

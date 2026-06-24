@@ -1,9 +1,14 @@
 import { DialogContainer } from "../../../ui/dialog-container";
 import { DialogContents } from "../../../ui/dialog-contents";
 import { Release, Item } from "../../../../../shared/types";
+import { useAppStore } from "../../../../store/app-store";
 import { GroupRowSkeleton, GroupRow } from "./group-row";
+import { TextField } from "../../../ui/text-field";
 import { Button } from "../../../ui/button";
 import { Icon } from "../../../ui/icon";
+import { useState } from "react";
+
+type ListState = "loading" | "showing" | "empty" | "none";
 
 interface Props {
   onSelect: (release: Release) => void;
@@ -14,7 +19,9 @@ interface Props {
 const NUM_SKELETONS = 6;
 
 export function GroupList({ onSelect, onClose, items }: Props) {
-  const isLoading = items.some((item) => item.itemStatus === "waiting" || item.itemStatus === "downloading" || item.itemStatus === "fetching");
+  const appStatus = useAppStore((x) => x.appStatus);
+  const [filter, setFilter] = useState("");
+
   const releases = items.reduce<Release[]>((result, item, index) => {
     const releases = item.releases ?? [];
     if (index === 0) {
@@ -25,21 +32,65 @@ export function GroupList({ onSelect, onClose, items }: Props) {
     return result.filter((x) => ids.has(x.id));
   }, []);
 
-  const hasReleases = releases.length > 0;
+  const matchFilter = (toMatch?: string): boolean => {
+    if (toMatch) {
+      return toMatch.toLowerCase().includes(filter.toLowerCase());
+    }
+
+    return false;
+  };
+
+  const isLoading = items.some((item) => item.itemStatus === "waiting" || item.itemStatus === "downloading" || item.itemStatus === "fetching");
+  const filtered = releases.filter((x) => matchFilter(x.performer) || matchFilter(x.album) || matchFilter(x.group) || matchFilter(x.id));
+  const hasReleases = (releases?.length ?? 0) > 0;
+  const hasMatch = (filtered?.length ?? 0) > 0;
+
+  const calculateState = (): ListState => {
+    if (isLoading) {
+      return "loading";
+    }
+
+    if (!hasReleases) {
+      return "empty";
+    }
+
+    if (!hasMatch) {
+      return "none";
+    }
+
+    return "showing";
+  };
+
+  const disabled = appStatus !== "downloaded";
+  const state = calculateState();
+
+  const canFilter = (state === "showing" || state === "none") && !disabled;
 
   return (
     <DialogContainer>
-      <DialogContents>
-        {!isLoading && hasReleases && releases?.map((release, index) => <GroupRow onSelect={() => onSelect(release)} release={release} key={release.id ?? index} />)}
-        {isLoading && Array.from({ length: NUM_SKELETONS }).map((_, index) => <GroupRowSkeleton key={index} />)}
-        {!isLoading && !hasReleases && (
-          <div className="flex justify-center items-center min-h-64">
-            <Icon className="size-5" icon="error">
-              <p className="text-sm text-gray-400 truncate">No releases available</p>
-            </Icon>
-          </div>
-        )}
-      </DialogContents>
+      <div className="w-full flex flex-1 flex-col justify-center items-center min-h-0 space-y-2">
+        <TextField onChange={setFilter} placeholder="Filter" disabled={!canFilter} value={filter} label="filter" required hidden>
+          Filter
+        </TextField>
+        <DialogContents>
+          {state === "showing" && filtered.map((release, index) => <GroupRow onSelect={() => onSelect(release)} release={release} key={release.id ?? index} />)}
+          {state === "loading" && Array.from({ length: NUM_SKELETONS }).map((_, index) => <GroupRowSkeleton key={index} />)}
+          {state === "empty" && (
+            <div className="size-full flex justify-center items-center">
+              <Icon className="size-5" icon="error">
+                <p className="text-sm text-gray-400 truncate">No releases available</p>
+              </Icon>
+            </div>
+          )}
+          {state === "none" && (
+            <div className="size-full flex justify-center items-center">
+              <Icon className="size-5" icon="info">
+                <p className="text-sm text-gray-400 truncate">No matching releases</p>
+              </Icon>
+            </div>
+          )}
+        </DialogContents>
+      </div>
       <div className="w-full flex justify-center items-center">
         <Button onClick={onClose} variant="success" size="small" type="submit">
           Done

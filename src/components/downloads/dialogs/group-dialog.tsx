@@ -35,8 +35,10 @@ export function GroupDialog({ onClose, release, items }: Props) {
     setVisible(false);
   };
 
+  const expand = view === "groups";
+
   return (
-    <Dialog onSetVisible={setVisible} onClose={onClose} onBack={handleBack} visible={visible} title={release?.album}>
+    <Dialog onSetVisible={setVisible} onClose={onClose} onBack={handleBack} visible={visible} expand={expand} title={release?.album}>
       {view === "groups" && <GroupList onSelect={handleViewRelease} onClose={handleRequestClose} items={items} />}
       {view === "detail" && <GroupDetails onClose={handleRequestClose} release={selected} items={items} />}
     </Dialog>

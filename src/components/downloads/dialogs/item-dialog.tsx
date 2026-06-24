@@ -52,8 +52,10 @@ export function ItemDialog({ onClose, item }: Props) {
     setVisible(false);
   };
 
+  const expand = view === "releases";
+
   return (
-    <Dialog onSetVisible={setVisible} onClose={onClose} onBack={handleBack} visible={visible} title={item.title}>
+    <Dialog onSetVisible={setVisible} onClose={onClose} onBack={handleBack} visible={visible} expand={expand} title={item.title}>
       {view === "releases" && <ReleaseList onOverride={() => setView("metadata")} onCustom={() => setView("custom")} onSelect={handleViewRelease} item={item} />}
       {view === "detail" && <ReleaseDetails onRequestClose={handleRequestClose} release={selected} item={item} />}
       {view === "metadata" && <MetadataForm onRequestClose={handleRequestClose} item={item} />}
