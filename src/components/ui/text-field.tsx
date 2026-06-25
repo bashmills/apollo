@@ -1,4 +1,5 @@
 import { HTMLInputTypeAttribute, ReactNode } from "react";
+import { IconButton } from "./icon-button";
 
 interface Props {
   onChange: (value: string) => void;
@@ -7,6 +8,7 @@ interface Props {
   required?: boolean;
   disabled?: boolean;
   hidden?: boolean;
+  reset?: boolean;
   error?: string;
   value: string;
   label: string;
@@ -14,30 +16,37 @@ interface Props {
   children: ReactNode;
 }
 
-export function TextField({ onChange, placeholder, inputMode, required, disabled, hidden, error, value, label, type, children }: Props) {
+export function TextField({ onChange, placeholder, inputMode, required, disabled, hidden, reset, error, value, label, type, children }: Props) {
   return (
-    <div className="w-full space-y-2">
-      {!hidden && (
-        <div className="flex items-center justify-between px-3 gap-2">
-          <label className="text-sm text-gray-400 text-left" htmlFor={label}>
-            {children}
-          </label>
-          {required && <span className="text-xs text-gray-400/50 text-right truncate">(Required)</span>}
-        </div>
-      )}
-      <input
-        className={`w-full px-6 py-4 bg-gray-700/50 border ${error ? "border-red-600" : "border-gray-600"} rounded-xl placeholder-gray-500/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all`}
-        onChange={(x) => onChange(x.target.value)}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        disabled={disabled}
-        value={value}
-        type={type}
-        id={label}
-      />
-      {error && (
-        <div className="flex items-center px-3 text-left">
-          <span className="text-xs text-red-400/50 truncate">{error}</span>
+    <div className="relative w-full">
+      <div className="w-full space-y-2">
+        {!hidden && (
+          <div className="flex items-center justify-between px-3 gap-2">
+            <label className="text-sm text-gray-400 text-left" htmlFor={label}>
+              {children}
+            </label>
+            {required && <span className="text-xs text-gray-400/50 text-right truncate">(Required)</span>}
+          </div>
+        )}
+        <input
+          className={`w-full px-6 py-4 bg-gray-700/50 border ${error ? "border-red-600" : "border-gray-600"} rounded-xl placeholder-gray-500/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all`}
+          onChange={(x) => onChange(x.target.value)}
+          placeholder={placeholder}
+          inputMode={inputMode}
+          disabled={disabled}
+          value={value}
+          type={type}
+          id={label}
+        />
+        {error && (
+          <div className="flex items-center px-3 text-left">
+            <span className="text-xs text-red-400/50 truncate">{error}</span>
+          </div>
+        )}
+      </div>
+      {reset && value && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <IconButton onClick={() => onChange("")} icon="clear" />
         </div>
       )}
     </div>

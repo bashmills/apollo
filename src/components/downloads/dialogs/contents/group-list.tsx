@@ -72,7 +72,7 @@ export function GroupList({ onSelect, onClose, items }: Props) {
   return (
     <DialogContainer>
       <div className="w-full flex flex-1 flex-col justify-center items-center min-h-0 space-y-2">
-        <TextField onChange={setFilter} placeholder="Filter" disabled={!canFilter} value={filter} label="filter" required hidden>
+        <TextField onChange={setFilter} placeholder="Filter" disabled={!canFilter} value={filter} label="filter" required hidden reset>
           Filter
         </TextField>
         <PersistContents id={DIALOG_STORE_ID}>
