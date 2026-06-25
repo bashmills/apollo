@@ -1,4 +1,5 @@
 import { PointerEvent, ReactNode, TransitionEvent, useEffect, useRef } from "react";
+import { DialogStoreProvider } from "../../providers/dialog-store-provider";
 import { IconButton } from "../ui/icon-button";
 import { createPortal } from "react-dom";
 
@@ -77,30 +78,32 @@ export function Dialog({ onSetVisible, onClose, onBack, visible, expand, title, 
   }, [onSetVisible]);
 
   return createPortal(
-    <div
-      className={`fixed inset-0 z-40 flex justify-center items-center backdrop-blur-sm bg-black/50 text-white p-4 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
-      onTransitionEnd={handleTransitionEnd}
-      onPointerMove={(x) => handlePointerMove(x)}
-      onPointerDown={(x) => handlePointerDown(x)}
-      onPointerUp={(x) => handlePointerUp(x)}
-    >
+    <DialogStoreProvider>
       <div
-        className={`w-full flex flex-col ${!expand ? "max-h-3/4" : "h-3/4"} max-w-3xl rounded-2xl p-6 space-y-6 border border-gray-700/50 bg-gray-800/80 shadow-2xl transform transition-transform duration-200 ${visible ? "scale-100" : "scale-0"}`}
-        onPointerDown={(x) => x.stopPropagation()}
-        onPointerUp={(x) => x.stopPropagation()}
+        className={`fixed inset-0 z-40 flex justify-center items-center backdrop-blur-sm bg-black/50 text-white p-4 transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
+        onTransitionEnd={handleTransitionEnd}
+        onPointerMove={(x) => handlePointerMove(x)}
+        onPointerDown={(x) => handlePointerDown(x)}
+        onPointerUp={(x) => handlePointerUp(x)}
       >
-        <div className="flex items-center justify-between">
-          <IconButton onClick={handleBack} icon="back" />
-          {title && (
-            <div className="flex-1 min-w-0 text-center">
-              <h2 className="font-semibold text-gray-200 truncate">{title}</h2>
-            </div>
-          )}
-          <IconButton onClick={handleClose} icon="close" />
+        <div
+          className={`w-full flex flex-col ${!expand ? "max-h-3/4" : "h-3/4"} max-w-3xl rounded-2xl p-6 space-y-6 border border-gray-700/50 bg-gray-800/80 shadow-2xl transform transition-transform duration-200 ${visible ? "scale-100" : "scale-0"}`}
+          onPointerDown={(x) => x.stopPropagation()}
+          onPointerUp={(x) => x.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <IconButton onClick={handleBack} icon="back" />
+            {title && (
+              <div className="flex-1 min-w-0 text-center">
+                <h2 className="font-semibold text-gray-200 truncate">{title}</h2>
+              </div>
+            )}
+            <IconButton onClick={handleClose} icon="close" />
+          </div>
+          {children}
         </div>
-        {children}
       </div>
-    </div>,
+    </DialogStoreProvider>,
     document.body,
   );
 }

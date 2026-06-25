@@ -1,12 +1,13 @@
+import { useDialogStore } from "../../../../hooks/use-dialog-store";
+import { useDialogState } from "../../../../hooks/use-dialog-state";
 import { DialogContainer } from "../../../ui/dialog-container";
-import { DialogContents } from "../../../ui/dialog-contents";
+import { PersistContents } from "../../../ui/persist-contents";
 import { Release, Item } from "../../../../../shared/types";
 import { useAppStore } from "../../../../store/app-store";
 import { GroupRowSkeleton, GroupRow } from "./group-row";
 import { TextField } from "../../../ui/text-field";
 import { Button } from "../../../ui/button";
 import { Icon } from "../../../ui/icon";
-import { useState } from "react";
 
 type ListState = "loading" | "showing" | "empty" | "none";
 
@@ -16,11 +17,13 @@ interface Props {
   items: Item[];
 }
 
+const DIALOG_STORE_ID = "group-list";
 const NUM_SKELETONS = 6;
 
 export function GroupList({ onSelect, onClose, items }: Props) {
+  const { setFilter } = useDialogStore(DIALOG_STORE_ID).getState();
+  const filter = useDialogState(DIALOG_STORE_ID, (x) => x.filter);
   const appStatus = useAppStore((x) => x.appStatus);
-  const [filter, setFilter] = useState("");
 
   const releases = items.reduce<Release[]>((result, item, index) => {
     const releases = item.releases ?? [];
@@ -72,7 +75,7 @@ export function GroupList({ onSelect, onClose, items }: Props) {
         <TextField onChange={setFilter} placeholder="Filter" disabled={!canFilter} value={filter} label="filter" required hidden>
           Filter
         </TextField>
-        <DialogContents>
+        <PersistContents id={DIALOG_STORE_ID}>
           {state === "showing" && filtered.map((release, index) => <GroupRow onSelect={() => onSelect(release)} release={release} key={release.id ?? index} />)}
           {state === "loading" && Array.from({ length: NUM_SKELETONS }).map((_, index) => <GroupRowSkeleton key={index} />)}
           {state === "empty" && (
@@ -89,7 +92,7 @@ export function GroupList({ onSelect, onClose, items }: Props) {
               </Icon>
             </div>
           )}
-        </DialogContents>
+        </PersistContents>
       </div>
       <div className="w-full flex justify-center items-center">
         <Button onClick={onClose} variant="success" size="small" type="submit">

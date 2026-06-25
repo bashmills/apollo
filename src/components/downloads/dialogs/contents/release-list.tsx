@@ -1,13 +1,14 @@
+import { useDialogStore } from "../../../../hooks/use-dialog-store";
+import { useDialogState } from "../../../../hooks/use-dialog-state";
 import { ReleaseRowSkeleton, ReleaseRow } from "./release-row";
 import { DialogContainer } from "../../../ui/dialog-container";
-import { DialogContents } from "../../../ui/dialog-contents";
+import { PersistContents } from "../../../ui/persist-contents";
 import { Release, Item } from "../../../../../shared/types";
 import { getUniqueKey } from "../../../../../shared/utils";
 import { useAppStore } from "../../../../store/app-store";
 import { TextField } from "../../../ui/text-field";
 import { Button } from "../../../ui/button";
 import { Icon } from "../../../ui/icon";
-import { useState } from "react";
 
 type ListState = "loading" | "showing" | "empty" | "none";
 
@@ -18,11 +19,13 @@ interface Props {
   item: Item;
 }
 
+const DIALOG_STORE_ID = "release-list";
 const NUM_SKELETONS = 3;
 
 export function ReleaseList({ onOverride, onCustom, onSelect, item }: Props) {
+  const { setFilter } = useDialogStore(DIALOG_STORE_ID).getState();
+  const filter = useDialogState(DIALOG_STORE_ID, (x) => x.filter);
   const appStatus = useAppStore((x) => x.appStatus);
-  const [filter, setFilter] = useState("");
 
   const matchFilter = (toMatch?: string): boolean => {
     if (toMatch) {
@@ -64,7 +67,7 @@ export function ReleaseList({ onOverride, onCustom, onSelect, item }: Props) {
         <TextField onChange={setFilter} placeholder="Filter" disabled={!canFilter} value={filter} label="filter" required hidden>
           Filter
         </TextField>
-        <DialogContents>
+        <PersistContents id={DIALOG_STORE_ID}>
           {state === "showing" && filtered?.map((release, index) => <ReleaseRow onSelect={() => onSelect(release)} release={release} key={getUniqueKey(release) ?? index} />)}
           {state === "loading" && Array.from({ length: NUM_SKELETONS }).map((_, index) => <ReleaseRowSkeleton key={index} />)}
           {state === "empty" && (
@@ -81,7 +84,7 @@ export function ReleaseList({ onOverride, onCustom, onSelect, item }: Props) {
               </Icon>
             </div>
           )}
-        </DialogContents>
+        </PersistContents>
       </div>
       <div className="w-full flex flex-col justify-center items-center space-y-2">
         <Button onClick={onOverride} disabled={disabled} variant="primary" size="medium" type="button">
