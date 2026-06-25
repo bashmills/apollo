@@ -1,5 +1,5 @@
 import { SettingsView } from "./components/settings/settings-view";
-import { useBackendEvents } from "./hooks/use-backend-handlers";
+import { useBackendHandlers } from "./hooks/use-backend-handlers";
 import { HeaderView } from "./components/headers/header-view";
 import { ItemsView } from "./components/downloads/items-view";
 import { FormView } from "./components/input/form-view";
@@ -9,9 +9,7 @@ import { Toaster } from "sonner";
 
 export function App() {
   const appStatus = useAppStore((x) => x.appStatus);
-
-  useBackendEvents();
-
+  useBackendHandlers();
   return (
     <div className="relative w-full h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col justify-center items-center p-4">
       <Tooltip portalRoot={document.body} variant="dark" place="bottom" id="image-type" noArrow />

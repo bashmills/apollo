@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import log from "electron-log/renderer";
 
-export function useBackendEvents() {
+export function useBackendHandlers() {
   useEffect(() => {
     const handleUpdateItems = (items: Item[]) => {
       log.info(`Handling update items: ${items.length}`);
