@@ -27,8 +27,6 @@ export function SearchList({ onRequestClose, release, item }: Props) {
   const hasGroups = groups.length > 0;
 
   useEffect(() => {
-    let mounted = true;
-
     async function load() {
       const results = await invokeWithSleep(
         () =>
@@ -43,18 +41,10 @@ export function SearchList({ onRequestClose, release, item }: Props) {
         DELAY,
       );
 
-      if (!mounted) {
-        return;
-      }
-
       setGroups(results);
     }
 
     load();
-
-    return () => {
-      mounted = false;
-    };
   }, [release, item]);
 
   const handleSelect = (value: string) => {

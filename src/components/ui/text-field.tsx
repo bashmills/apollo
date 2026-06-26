@@ -29,7 +29,7 @@ export function TextField({ onChange, placeholder, inputMode, required, disabled
           </div>
         )}
         <input
-          className={`w-full px-6 py-4 bg-gray-700/50 border ${error ? "border-red-600" : "border-gray-600"} rounded-xl placeholder-gray-500/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all`}
+          className={`w-full px-6 py-4 bg-gray-700/50 border ${error ? "border-red-600" : "border-gray-600"} rounded-xl placeholder-gray-500/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${disabled ? "cursor-not-allowed opacity-50" : ""} transition-all`}
           onChange={(x) => onChange(x.target.value)}
           placeholder={placeholder}
           inputMode={inputMode}

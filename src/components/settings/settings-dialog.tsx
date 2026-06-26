@@ -1,5 +1,5 @@
 import { ButtonToggle, ToggleItem } from "../ui/button-toggle";
-import { BrowserType, Settings } from "../../../shared/types";
+import { BrowserType, Versions } from "../../../shared/types";
 import { DialogContainer } from "../ui/dialog-container";
 import { DialogContents } from "../ui/dialog-contents";
 import { useHandlers } from "../../hooks/use-handlers";
@@ -23,38 +23,47 @@ export function SettingsDialog({ onClose }: Props) {
   const { handleSaveSettings, handleFetchLatest, handleClearCache } = useHandlers();
   const [personalAccessToken, setPersonalAccessToken] = useState("");
   const [browserType, setBrowserType] = useState<BrowserType>("none");
+  const [versions, setVersions] = useState<Versions | null>(null);
   const [workers, setWorkers] = useState<string[]>([]);
-  const [version, setVersion] = useState<string>();
   const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const onSave = async () => {
+  async function loadSettings() {
+    const result = await window.backend.getSettings();
+    if (!result) {
+      return;
+    }
+
+    setPersonalAccessToken(result.personalAccessToken);
+    setBrowserType(result.browserType);
+    setLoading(false);
+  }
+
+  async function loadVersions() {
+    const result = await window.backend.getVersions();
+    setVersions(result);
+  }
+
+  const handleSave = async () => {
     await handleSaveSettings({ personalAccessToken, browserType });
   };
 
+  const handleFetch = async () => {
+    const result = await handleFetchLatest();
+    if (result !== "fetched") {
+      return;
+    }
+
+    await loadVersions();
+  };
+
+  const handleClear = async () => {
+    await handleClearCache();
+  };
+
   useEffect(() => {
-    let mounted = true;
-
-    async function loadSettings() {
-      const value: Settings = await window.backend.getSettings();
-      if (mounted && value) {
-        setPersonalAccessToken(value.personalAccessToken);
-        setBrowserType(value.browserType);
-      }
-    }
-
-    async function loadVersion() {
-      const version = await window.backend.getVersion();
-      if (mounted) {
-        setVersion(version);
-      }
-    }
-
     loadSettings();
-    loadVersion();
-
-    return () => {
-      mounted = false;
-    };
+    loadVersions();
   }, []);
 
   return (
@@ -66,7 +75,7 @@ export function SettingsDialog({ onClose }: Props) {
               <div className="w-full text-center">
                 <h3 className="font-semibold text-gray-200 truncate">GitHub Personal Access Token</h3>
               </div>
-              <TextField onChange={setPersonalAccessToken} placeholder="Token" value={personalAccessToken} label="personalAccessToken" hidden>
+              <TextField onChange={setPersonalAccessToken} placeholder="Token" disabled={loading} value={personalAccessToken} label="personalAccessToken" hidden>
                 Token
               </TextField>
             </div>
@@ -74,26 +83,27 @@ export function SettingsDialog({ onClose }: Props) {
               <div className="w-full text-center">
                 <h3 className="font-semibold text-gray-200 truncate">Import Browser Cookies</h3>
               </div>
-              <ButtonToggle onClick={setBrowserType} toggles={TOGGLES} current={browserType} />
+              <ButtonToggle onClick={setBrowserType} toggles={TOGGLES} disabled={loading} current={browserType} />
             </div>
             <div className="w-full flex flex-col justify-center items-center space-y-2">
               <div className="w-full text-center">
                 <h3 className="font-semibold text-gray-200 truncate">Misc</h3>
               </div>
-              <SettingsButton onCallback={() => handleFetchLatest()} setWorkers={setWorkers} workers={workers} variant="primary" worker="latest">
+              <SettingsButton onCallback={() => handleFetch()} setWorkers={setWorkers} workers={workers} variant="primary" worker="latest">
                 Fetch Latest Tools
               </SettingsButton>
-              <SettingsButton onCallback={() => handleClearCache()} setWorkers={setWorkers} workers={workers} variant="danger" worker="cache">
+              <p className="text-xs text-gray-500 truncate">{versions?.ytdlpVersion || "Tools Not Installed"}</p>
+              <SettingsButton onCallback={() => handleClear()} setWorkers={setWorkers} workers={workers} variant="danger" worker="cache">
                 Clear Cache
               </SettingsButton>
             </div>
           </div>
         </DialogContents>
         <div className="relative w-full flex flex-col justify-center items-center">
-          <SettingsButton onCallback={onSave} setWorkers={setWorkers} workers={workers} variant="success" worker="save">
+          <SettingsButton onCallback={handleSave} setWorkers={setWorkers} workers={workers} variant="success" worker="save">
             Save
           </SettingsButton>
-          {version && <p className="absolute bottom-0 translate-y-5 text-xs text-gray-500 truncate">{version}</p>}
+          {versions && <p className="absolute bottom-0 translate-y-5 text-xs text-gray-500 truncate">{versions?.appVersion}</p>}
         </div>
       </DialogContainer>
     </Dialog>

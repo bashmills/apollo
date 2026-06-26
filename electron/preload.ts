@@ -1,5 +1,5 @@
-import { IpcRendererEvent, contextBridge, ipcRenderer } from "electron";
 import { MetadataType, Settings, Metadata, Item } from "../shared/types";
+import { IpcRendererEvent, contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("backend", {
   onUpdateItems: (callback: (newItems: Item[]) => void) => {
@@ -50,5 +50,5 @@ contextBridge.exposeInMainWorld("backend", {
   fetchLatest: () => ipcRenderer.invoke("fetch-latest"),
   clearCache: () => ipcRenderer.invoke("clear-cache"),
 
-  getVersion: () => ipcRenderer.invoke("get-version"),
+  getVersions: () => ipcRenderer.invoke("get-versions"),
 });

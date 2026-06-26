@@ -19,22 +19,12 @@ export function CoverArt({ className, id }: Props) {
       return;
     }
 
-    let mounted = true;
-
     async function load() {
       const value = id ? await window.backend?.requestCoverArt(id) : null;
-      if (!mounted) {
-        return;
-      }
-
       setSrc(value);
     }
 
     load();
-
-    return () => {
-      mounted = false;
-    };
   }, [shouldHide, id]);
 
   return (

@@ -1,5 +1,6 @@
 import { getResourcesDirectory, getDataDirectory, doesExist } from "../utils/os";
 import { NotModifiedError, RateLimitError } from "../errors";
+import { FetchResult, Settings } from "../../shared/types";
 import { State, writeState, readState } from "./state";
 import { limiter } from "../utils/limiter";
 import { loadSettings } from "./settings";
@@ -7,7 +8,6 @@ import log from "electron-log/main";
 import { app } from "electron";
 import fs from "fs/promises";
 import path from "path";
-import { Settings } from "../../shared/types";
 
 type ToolName = "yt-dlp" | "ffmpeg" | "deno";
 type ToolType = "download" | "bundled";
@@ -38,7 +38,7 @@ interface Info {
 }
 
 interface Version {
-  currentVersion: string;
+  latest: string;
   assets: Asset[];
   etag: string;
 }
@@ -91,23 +91,23 @@ const TOOLS = new Map<ToolName, Tool>([
 
 const GITHUB_API_URL = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest";
 const USER_AGENT = `Apollo/${app.getVersion()} ( bashmills@proton.me )`;
-const CHECK_THRESHOLD = 1000 * 60 * 60;
+const CHECK_THRESHOLD = 1000 * 60;
 const DELAY = 1200;
 
-export async function checkLatestVersion(signal: AbortSignal) {
+export async function checkLatestVersion(signal: AbortSignal): Promise<FetchResult> {
   const settings = await loadSettings();
   const state = await readState();
   const lastChecked = Date.now();
 
-  if (isWaitingForRetry(state)) {
-    throw new RateLimitError();
-  }
-
   try {
+    if (isWaitingForRetry(state)) {
+      throw new Error("Waiting for rate limit retry time");
+    }
+
     const info = await buildInfo();
     if (await hasCachedVersion(state, info)) {
-      log.info(`Using cached yt-dlp version: ${state.currentVersion}`);
-      return;
+      log.info(`Using cached yt-dlp version: ${state.ytdlpVersion}`);
+      return "not-fetched";
     }
 
     const version = await fetchLatestVersion(signal, settings, state);
@@ -115,17 +115,29 @@ export async function checkLatestVersion(signal: AbortSignal) {
       throw new NotModifiedError();
     }
 
-    log.info(`Downloading new yt-dlp version: ${version.currentVersion}`);
+    log.info(`Downloading new yt-dlp version: ${version.latest}`);
     await downloadVersion(info, signal, version);
-    log.info(`Using new yt-dlp version: ${version.currentVersion}`);
-    const { currentVersion, etag } = version;
+    log.info(`Using new yt-dlp version: ${version.latest}`);
+    const ytdlpVersion = version.latest;
+    const { etag } = version;
+
     await writeState({
       ...state,
-      currentVersion,
+      ytdlpVersion,
       lastChecked,
       etag,
     });
   } catch (error) {
+    if (error instanceof NotModifiedError) {
+      log.info(`Using same yt-dlp version: ${state.ytdlpVersion}`);
+      await writeState({
+        ...state,
+        lastChecked,
+      });
+
+      return "not-fetched";
+    }
+
     if (error instanceof RateLimitError) {
       const { retryAfter } = error;
       await writeState({
@@ -133,22 +145,12 @@ export async function checkLatestVersion(signal: AbortSignal) {
         lastChecked,
         retryAfter,
       });
-
-      throw error;
-    }
-
-    if (error instanceof NotModifiedError) {
-      log.info(`Using same yt-dlp version: ${state.currentVersion}`);
-      await writeState({
-        ...state,
-        lastChecked,
-      });
-
-      return;
     }
 
     throw error;
   }
+
+  return "fetched";
 }
 
 export function getToolPaths(): ToolPaths {
@@ -218,7 +220,7 @@ async function fetchLatestVersion(signal: AbortSignal, settings: Settings, state
     throw new Error("No latest yt-dlp version found");
   }
 
-  const currentVersion = json.tag_name ?? "";
+  const latest = json.tag_name ?? "";
   const assets =
     json.assets?.map((asset) => {
       return {
@@ -229,7 +231,7 @@ async function fetchLatestVersion(signal: AbortSignal, settings: Settings, state
   const etag = headers.get("etag") ?? "";
 
   return {
-    currentVersion,
+    latest,
     assets,
     etag,
   };
@@ -285,8 +287,8 @@ async function hasCachedVersion({ lastChecked }: State, { toolPath }: Info): Pro
   return delay > 0;
 }
 
-function isSameVersion({ currentVersion }: State, version: Version): boolean {
-  if (version.currentVersion === currentVersion) {
+function isSameVersion({ ytdlpVersion }: State, version: Version): boolean {
+  if (version.latest === ytdlpVersion) {
     return true;
   }
 

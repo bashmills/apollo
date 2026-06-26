@@ -1,6 +1,6 @@
+import { MetadataType, Settings, Metadata, Versions, Item } from "../shared/types";
 import { searchCustomReleases, overrideDownload } from "./services/releases";
 import { BrowserWindow, ipcMain, protocol, dialog, app } from "electron";
-import { MetadataType, Settings, Metadata, Item } from "../shared/types";
 import { startDownloads, retryDownloads } from "./services/downloader";
 import { clearCoverArt, fetchCoverArt } from "./services/cover-art";
 import { loadSettings, saveSettings } from "./services/settings";
@@ -9,6 +9,7 @@ import { fetchThumbnail } from "./services/thumbnail";
 import { exportDownloads } from "./services/saver";
 import { getCacheDirectory } from "./utils/os";
 import { APP_ROOT, DIRNAME } from "./utils/os";
+import { readState } from "./services/state";
 import log from "electron-log/main";
 import fs from "fs/promises";
 import path from "path";
@@ -26,24 +27,6 @@ let mainWindow: BrowserWindow | null;
 
 process.env.VITE_PUBLIC = VITE_PUBLIC;
 process.env.APP_ROOT = APP_ROOT;
-
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: PROTOCOL_SCHEME,
-    privileges: {
-      supportFetchAPI: true,
-      corsEnabled: true,
-      standard: true,
-      secure: true,
-    },
-  },
-]);
-
-log.transports.console.level = VITE_DEV_SERVER_URL ? "debug" : "info";
-log.transports.remote.level = false;
-log.transports.file.level = "silly";
-log.transports.ipc.level = false;
-log.initialize();
 
 function registerProtocols() {
   protocol.handle(PROTOCOL_SCHEME, async (request) => {
@@ -100,7 +83,23 @@ app.on("activate", () => {
   }
 });
 
-app.whenReady().then(registerProtocols).then(createWindow);
+log.transports.console.level = VITE_DEV_SERVER_URL ? "debug" : "info";
+log.transports.remote.level = false;
+log.transports.file.level = "silly";
+log.transports.ipc.level = false;
+log.initialize();
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: PROTOCOL_SCHEME,
+    privileges: {
+      supportFetchAPI: true,
+      corsEnabled: true,
+      standard: true,
+      secure: true,
+    },
+  },
+]);
 
 ipcMain.handle("search-custom-releases", async (event, metadata: Metadata, item: Item) => {
   try {
@@ -326,13 +325,13 @@ ipcMain.handle("fetch-latest", async (event) => {
   try {
     log.info("Fetching latest...");
     const signal = resetAbortController();
-    await checkLatestVersion(signal);
+    const result = await checkLatestVersion(signal);
     log.info("Latest fetched");
-    return true;
+    return result;
   } catch (error) {
     log.error(`Fetching latest failed: ${error}`);
     event.sender.send("show-error", error);
-    return false;
+    return "failed";
   } finally {
     abortController = null;
   }
@@ -352,8 +351,23 @@ ipcMain.handle("clear-cache", async (event) => {
   }
 });
 
-ipcMain.handle("get-version", async () => {
-  return app.getVersion();
+ipcMain.handle("get-versions", async (event) => {
+  try {
+    log.info("Getting versions...");
+    const { ytdlpVersion } = await readState();
+    const appVersion = app.getVersion();
+    const versions: Versions = {
+      ytdlpVersion,
+      appVersion,
+    };
+
+    log.info("Got versions");
+    return versions;
+  } catch (error) {
+    log.error(`Getting versions failed: ${error}`);
+    event.sender.send("show-error", error);
+    return null;
+  }
 });
 
 function resetAbortController(): AbortSignal {
@@ -375,3 +389,5 @@ function abort() {
   abortController.abort();
   abortController = null;
 }
+
+app.whenReady().then(registerProtocols).then(createWindow);

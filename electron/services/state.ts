@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 
 export interface State {
-  currentVersion: string;
+  ytdlpVersion: string;
   lastChecked: number;
   retryAfter?: number;
   etag: string;
@@ -60,7 +60,7 @@ function getStatePath(): string {
 
 function createEmptyState(): State {
   return {
-    currentVersion: "",
+    ytdlpVersion: "",
     lastChecked: 0,
     etag: "",
   };

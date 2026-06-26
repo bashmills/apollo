@@ -1,8 +1,8 @@
-import { ItemStatus, ImageType, Settings, Metadata, Release, Item } from "../../shared/types";
+import { ItemStatus, ImageType, FetchResult, Settings, Metadata, Release, Item } from "../../shared/types";
 import { invokeWithSleep } from "../utils/promise";
 import { useAppStore } from "../store/app-store";
-import { toast } from "sonner";
 import log from "electron-log/renderer";
+import { toast } from "sonner";
 
 const DELAY = 200;
 
@@ -211,7 +211,7 @@ export function useHandlers() {
         return;
       }
 
-      toast.info("Downloads reset");
+      toast.success("Downloads reset");
       reset();
       log.info("Handle reset success");
     },
@@ -236,22 +236,30 @@ export function useHandlers() {
     },
 
     // Fetch lastest handler
-    handleFetchLatest: async () => {
+    handleFetchLatest: async (): Promise<FetchResult> => {
       log.info("Handling fetch latest...");
       const { appStatus } = useAppStore.getState();
       if (appStatus !== "waiting") {
         log.error(`Incorrect status for fetching latest: ${appStatus}`);
-        return;
+        return "failed";
       }
 
-      const success = await invokeWithSleep(() => window.backend?.fetchLatest(), DELAY);
-      if (!success) {
+      const result = await invokeWithSleep(() => window.backend?.fetchLatest(), DELAY);
+      if (result === "failed") {
         log.info("Handle fetch latest failed");
-        return;
+        return result;
       }
 
-      toast.success("Latest fetched");
+      if (result === "not-fetched") {
+        toast.info("Already have latest tools");
+      }
+
+      if (result === "fetched") {
+        toast.success("Latest tools fetched");
+      }
+
       log.info("Handle fetch latest success");
+      return result;
     },
 
     // Clear cache handler
